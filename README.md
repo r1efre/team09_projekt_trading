@@ -1,0 +1,1 @@
+# team09_projekt_trading
