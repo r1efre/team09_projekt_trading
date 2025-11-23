@@ -1,9 +1,8 @@
 from alpaca.data.historical import CryptoHistoricalDataClient
 from alpaca.data.requests import CryptoBarsRequest
 from alpaca.data.timeframe import TimeFrame
-import pandas as pd
 from datetime import datetime
-import pytz
+import pandas as pd
 import yaml
 
 # Load API credentials from YAML configuration file
@@ -31,3 +30,20 @@ for symbol in symbols:
 
     bars = crypto_client.get_crypto_bars(request)
     df = bars.df
+    df.reset_index(inplace=True)
+    df.drop(columns=['symbol'], inplace=True)
+
+    # Save the DataFrame as a Parquet file for efficient storage
+    clean_symbol = symbol.split('/')[0]
+    df.to_parquet(f'{PATH_BARS}/{clean_symbol}.parquet', index=False)
+
+# Extract the ETH close price
+eth = pd.read_parquet(f'{PATH_BARS}/ETH.parquet')
+eth = eth[['timestamp', 'close']]
+eth = eth.rename(columns={'close': 'eth_close'})
+
+btc = pd.read_parquet(f'{PATH_BARS}/BTC.parquet')
+
+# Merge BTC table with eth_close
+df_merged = btc.merge(eth, on='timestamp', how='inner')
+df_merged.to_parquet(f'{PATH_BARS}/dataMerged.parquet', index=False)

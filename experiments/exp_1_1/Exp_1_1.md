@@ -32,3 +32,18 @@ Durch die Modellierung der Trendrichtung (Up/Down/Neutral) auf Basis historische
 
 
 ## Step 1 - Data Acquisition
+
+Es werden Rohmarktdaten für Bitcoin und Ethereum extrahiert. Da Kryptowährungen rund um die Uhr gehandelt werden, ist keine Filterung nach Öffnungs- oder Schließzeiten erforderlich.
+
+**Script**
+
+[scripts/01_data_acquisition/01_data_acquisition.py](scripts/01_data_acquisition/01_data_acquisition.py)
+
+Lädt stündliche, Kursbalken (OHLCV) für Bitcoin und Ethereum im Zeitraum vom 01.01.2024 bis zum 01.11.2025 und speichert die Daten als Parquet-Dateien.
+Im nächsten Schritt werden die Bitcoin-Daten mit dem Ethereum-Schlusskurs über den gemeinsamen Zeitstempel gemergt, sodass der ETH-Close-Wert als zusätzliches Feature zur Verfügung steht.
+
+Bar data example:
+
+![Datenübersicht](images/DatenUebersicht.png) 
+
+---
