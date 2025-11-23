@@ -26,7 +26,9 @@ Das Modell verarbeitet pro Stunde eine Reihe Features, die Preisstruktur, Trend,
 - Labelgenerierung: Berechnung des 1-Stunden-Returns und Klassifikation der Trendrichtung in Up / Down / Neutral anhand einer Toleranzschwelle.
 - Modelltraining: Training eines LSTM-Netzwerks, das aus 48-stündigen Sequenzen die Trendklasse der nächsten Stunde vorhersagt.
 
-Zielsetzung: Aufdeckung von Mustern in Preis-, Volumen- und Cross-Asset-Beziehungen, die kurzfristigen Trendbewegungen im Bitcoin-Markt vorhersagen.
+Zielsetzung: 
+Die Analyse soll Muster in Preis-, Volumen- und Cross-Asset-Beziehungen identifizieren, die kurzfristige Trendbewegungen im Bitcoin-Markt zuverlässig vorhersagen.
+Durch die Modellierung der Trendrichtung (Up/Down/Neutral) auf Basis historischer Daten sollen Entscheidungsgrundlagen geschaffen werden, um günstige Kauf- und Verkaufszeitpunkte zu erkennen und so potenziell profitablere Handelsentscheidungen zu ermöglichen.
 
 
 ## Step 1 - Data Acquisition
