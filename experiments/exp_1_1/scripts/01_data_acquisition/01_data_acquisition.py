@@ -1,4 +1,4 @@
-from alpaca.data.historical import CryptoHistoricalDataClient
+from alpaca.data import CryptoHistoricalDataClient
 from alpaca.data.requests import CryptoBarsRequest
 from alpaca.data.timeframe import TimeFrame
 from datetime import datetime

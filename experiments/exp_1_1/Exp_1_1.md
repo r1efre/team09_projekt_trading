@@ -53,3 +53,5 @@ Bar data example:
 ![Datenübersicht](images/DatenUebersicht.png) 
 
 ---
+
+## Step 2 - Data Understanding
