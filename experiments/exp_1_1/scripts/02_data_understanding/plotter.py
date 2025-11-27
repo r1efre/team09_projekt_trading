@@ -18,7 +18,7 @@ df = df.sort_values("timestamp").set_index("timestamp")
 
 
 # 1) Plot the closing price of BTC over time
-
+# Was run twice, with data for different time windows
 fig, ax = plt.subplots(figsize=(14, 5))
 
 ax.plot(df.index, df["close"], label="BTC Close", linewidth=1)
@@ -111,7 +111,8 @@ plt.close()
 
 
 
-# 4) BTC intraday close prices for the last day
+# 4) BTC and ETH intraday close prices for the last day
+## BTC
 
 end = df.index.max()
 start = end - pd.Timedelta(days=1)
@@ -135,8 +136,7 @@ plt.savefig("../../images/02_btc_close_day.png")
 plt.close()
 
 
-
-# 5) ETH intraday close prices for the last day
+## ETH
 
 one_day_eth = df.loc[start:end, "eth_close"]
 
@@ -159,7 +159,7 @@ plt.close()
 
 
 
-# 6) Correlation between BTC and ETH (last 30 days)
+# 5) Correlation between BTC and ETH (last 30 days)
 
 end = df.index.max()
 start = end - pd.Timedelta(days=30)
@@ -195,7 +195,7 @@ ax.text(
 )
 
 plt.tight_layout()
-plt.savefig("../../images/02_btc+eth_correlation.png")
+plt.savefig("../../images/02_btc_eth_correlation.png")
 plt.close()
 
 

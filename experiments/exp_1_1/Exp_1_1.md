@@ -56,9 +56,89 @@ Bar data example:
 
 ## Step 2 - Data Understanding
 
+Analyse historischer BTC-Preisdaten, um die Struktur, Eigenschaften und das Verhalten der Zeitreihe zu verstehen.
+Ziel ist es, wichtige statistische Abhängigkeiten, sich wiederholende Muster und Besonderheiten zu identifizieren, die die Auswahl der Merkmale und die Architektur des Modells beeinflussen.
+
+**Data Colums**
+
+| Column      | Description                                                                            |
+|-------------|----------------------------------------------------------------------------------------|
+| timestamp   | Der genaue Zeitpunkt (UTC), zu dem die stündliche Kerze geschlossen wurde - Zeitindex. |
+| open        | Der BTC-Preis zu Beginn des Stundenintervalls.                                         |
+| high        | Der höchste BTC-Preis, der während dieser Stunde erreicht wurde.                       |
+| low         | Der niedrigste BTC-Preis, der während dieser Stunde erreicht wurde.                    |
+| close       | Der BTC-Preis am Ende des Stundenintervalls (Zielvariable).                            |
+| volume      | Das gehandelte BTC-Volumen während der Stunde - Marktaktivität.                        |
+| trade_count | Anzahl der ausgeführten Trades innerhalb einer Stunde.                                 |
+| vwap        | Volumengewichteter Durchschnittspreis für die Stunde.                                  |
+| eth_close   | Der stündliche Schlusskurs von Ethereum (ETH).                                         |
 
 
 **Script**
 
 [scripts/02_data_understanding/plotter.py](scripts/02_data_understanding/plotter.py)
+
+**Plots**
+
+*1) Entwicklung des BTC-Schlusskurses über den gesamten Zeitraum 2024–2025 vs 2021-2025*
+
+Dieses Diagramm zeigt die langfristige Entwicklung des Schlusskurses von BTC über den gesamten Beobachtungszeitraum. Es ermöglicht die Darstellung der Gesamtstruktur einer Zeitreihe.
+
+![Schlusskurse 2024-2025](images/02_btc_close_2024-2025.png) 
+
+Ursprünglich haben wir einen Chart mit den Schlusskursen von BTC nur für den Zeitraum 2024–2025 erstellt.
+In diesem Zeitraum war jedoch fast ausschließlich ein anhaltender Aufwärtstrend ohne nennenswerte Korrekturen zu beobachten.
+Damit das Modell nicht nur auf Wachstumsphasen des Marktes trainiert werden konnte, haben wir den Zeitrahmen auf 2021–2025 erweitert.
+
+![Schlusskurse 2021-2025](images/02_btc_close_2021-2025.png) 
+
+Dieser Bereich umfasst starke Preisrückgänge, beispielsweise den starken Einbruch, der im Dezember 2021 einsetzte, wodurch das Modell verschiedene Marktbedingungen berücksichtigen kann.
+
+
+*2) Korrelationsmatrix der Features*
+
+Dieses Diagramm zeigt, wie stark die numerischen Merkmale miteinander verbunden sind, indem es die lineare Abhängigkeit zwischen ihnen misst (Pearson-Koeffizient von –1 bis +1).
+
+![Korrelationsmatrix](images/02_heatmap_features.png)
+
+Die Korrelationsmatrix zeigt, dass sich die Preismerkmale stark überschneiden (Open, High, Low, Close, VWAP), während das Volumen und die Anzahl der Transaktionen separate, unabhängige Informationen liefern.
+Darüber hinaus bestätigt die moderate Korrelation zwischen BTC und ETH, dass der ETH-Preis ein nützliches zusätzliches Merkmal für das Modell ist.
+
+
+*3) Durchschnittliches stündliches Muster der BTC-Returns (letzte 30 Tage)*
+
+Dieses Diagramm zeigt, wie sich der Preis von Bitcoin im Durchschnitt je nach Tageszeit verändert.
+Wir nehmen die historischen Daten der letzten 30 Tage, berechnen Return, d. h. die Preisänderung gegenüber der vorherigen Stunde,  jede Stunde und mitteln sie für jede Stunde des Tages.
+
+![Intraday-Saisonalitätsmuster](images/02_btc_intraday_seasonality.png)
+
+Durch die Gruppierung von Returns nach Tageszeiten lassen sich wiederkehrende Intraday-Muster erkennen. 
+Der BTC-Markt verhält sich im Laufe des Tages nicht chaotisch, sondern folgt bestimmten Zyklen, die mit der Aktivität verschiedener Handelssitzungen (europäischer und amerikanischer Markt) zusammenhängen.
+Dieses Marktverhalten begründet den Einsatz von LSTM, das sequenzielle Abhängigkeiten gut erfasst.
+
+*4) Veränderung der BTC/ETH-Close-Preise über den letzten Tag*
+
+Die folgenden beiden Grafiken zeigen die intraday-Veränderung des Schlusskurses von BTC und ETH in den letzten 24 Stunden.
+Wir haben sie erstellt, um zu sehen, ob die beiden Vermögenswerte ähnliche intraday-Bewegungen aufweisen. 
+
+![BTC-Close-Preise](images/02_btc_close_day.png) 
+
+![ETH-Close-Preise](images/02_eth_close_day.png)
+
+Die Grafiken zeigen, dass sich die Preise von Bitcoin und Ethereum im Laufe des Tages ähnlich verhalten. Dies bestätigt, dass das Merkmal eth_close für die BTC-Prognose aussagekräftig ist.
+
+*5) Korrelation zwischen BTC und ETH (letzte 30 Tage)*
+
+Dieses Diagramm ist ein Streudiagramm, in dem jeder Punkt ein Wertepaar aus BTC_close und ETH_close zur gleichen Uhrzeit darstellt.
+Wir haben dieses Diagramm erstellt, um endgültig zu bestätigen, dass ETH ein nützliches zusätzliches Merkmal für das Modell ist.
+
+![Korrelation zwischen BTC und ETH](images/02_btc_eth_correlation.png)
+
+Auf dem Diagramm ist deutlich zu erkennen, dass die Datenpunkte entlang einer aufsteigenden Linie konzentriert sind.
+Dies deutet auf eine sehr starke positive lineare Abhängigkeit zwischen BTC und ETH hin.
+Der berechnete Pearson-Korrelationskoeffizient r = 0,96 bestätigt diese Abhängigkeit zusätzlich.
+
+
+ 
+
 
