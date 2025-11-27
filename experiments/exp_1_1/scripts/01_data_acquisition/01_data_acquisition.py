@@ -47,3 +47,4 @@ btc = pd.read_parquet(f'{PATH_BARS}/BTC.parquet')
 # Merge BTC table with eth_close
 df_merged = btc.merge(eth, on='timestamp', how='inner')
 df_merged.to_parquet(f'{PATH_BARS}/dataMerged.parquet', index=False)
+

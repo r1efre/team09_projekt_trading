@@ -55,3 +55,10 @@ Bar data example:
 ---
 
 ## Step 2 - Data Understanding
+
+
+
+**Script**
+
+[scripts/02_data_understanding/plotter.py](scripts/02_data_understanding/plotter.py)
+
