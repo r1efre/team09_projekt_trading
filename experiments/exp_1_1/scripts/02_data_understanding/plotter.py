@@ -52,109 +52,113 @@ plt.close()
 
 
 
-# 2) Feature Correlation Heatmap
-
-# Select only numeric features (timestamp is not numeric)
-numeric_df = df.select_dtypes(include=["int64", "float64"])
-corr = numeric_df.corr()
-
-plt.figure(figsize=(12, 8))
-sns.heatmap(
-    corr,
-    annot=True,
-    fmt=".2f",
-    cmap="coolwarm",
-    vmin=-1, vmax=1,
-    square=True,
-    linewidths=0.5,
-    cbar_kws={"shrink": 0.8}
-)
-plt.title("Korrelationsmatrix der Features")
-plt.tight_layout()
-plt.savefig("../../images/02_heatmap_features.png")
-plt.close()
-
-
-
-# 3) Intraday Patterns: Hourly Returns over last 30 days
+# 2) BTC OHLCV average daily trend (based on last year)
 
 end = df.index.max()
-start = end - pd.Timedelta(days=30)
-df_30d = df.loc[start:end].copy()
+start = end - pd.Timedelta(days=365)
+df_year = df.loc[start:end].copy()
 
-# Calculate returns
-df_30d["returns"] = df_30d["close"].pct_change()
-df_30d["hour"] = df_30d.index.hour
+# Extract hour of day
+df_year["hour"] = df_year.index.hour
 
-# Calculate average returns per hour
-hourly_pattern = df_30d.groupby("hour")["returns"].mean()
+# Average OHLCV per hour over the last year
+hourly_ohlcv = df_year.groupby("hour")[["open", "high", "low", "close", "volume"]].mean()
 
+fig, ax1 = plt.subplots(figsize=(14, 6))
 
-plt.figure(figsize=(12, 5))
-plt.plot(
-    hourly_pattern.index,
-    hourly_pattern.values,
-    marker="o",
-    linewidth=2,
-    color="purple"
+# Plot OHLC lines over 24 hours
+ax1.plot(hourly_ohlcv.index, hourly_ohlcv["open"],  label="Open",  linewidth=1)
+ax1.plot(hourly_ohlcv.index, hourly_ohlcv["high"],  label="High",  linewidth=1)
+ax1.plot(hourly_ohlcv.index, hourly_ohlcv["low"],   label="Low",   linewidth=1)
+ax1.plot(hourly_ohlcv.index, hourly_ohlcv["close"], label="Close", linewidth=1.3)
+
+ax1.set_xlabel("Stunde des Tages")
+ax1.set_ylabel("Preis (BTC)")
+ax1.set_title("Durchschnittlicher BTC-OHLC-Verlauf und Volumen pro Stunde (auf Basis des letzten Jahres)")
+
+ax1.set_xticks(range(0, 24))
+ax1.set_xticklabels([f"{h:02d}:00" for h in range(24)])
+ax1.grid(True, linestyle="--", alpha=0.5)
+ax1.spines["top"].set_visible(False)
+ax1.spines["right"].set_visible(False)
+
+# Volume on secondary axis
+ax2 = ax1.twinx()
+ax2.bar(
+    hourly_ohlcv.index,
+    hourly_ohlcv["volume"],
+    alpha=0.2,
+    color="grey",
+    label="Volume"
 )
+ax2.set_ylabel("Durchschnittliches Trading-Volumen")
 
-plt.title("Durchschnittliches stündliches Muster BTC (basierend auf den letzten 30 Tagen)")
-plt.xlabel("Stunde des Tages")
-plt.ylabel("Returns")
+# Combine legends
+lines_1, labels_1 = ax1.get_legend_handles_labels()
+lines_2, labels_2 = ax2.get_legend_handles_labels()
+ax1.legend(lines_1 + lines_2, labels_1 + labels_2, loc="upper left")
 
-plt.grid(True, linestyle="--", alpha=0.6)
-plt.xticks(range(0, 24))
 plt.tight_layout()
-plt.savefig("../../images/02_btc_intraday_seasonality.png")
+plt.savefig("../../images/02_btc_ohlcv_mean_intraday.png")
 plt.close()
+
+
+
+# 3) Average BTC high-low range per hour (based on last year)
+# noch erwartet
 
 
 
 # 4) BTC and ETH intraday close prices for the last day
-## BTC
-
 end = df.index.max()
-start = end - pd.Timedelta(days=1)
-one_day_btc = df.loc[start:end, "close"]
+start = end - pd.Timedelta(days=30)
+df_30d = df.loc[start:end].copy()
 
-fig, ax = plt.subplots(figsize=(14, 5))
-ax.plot(one_day_btc.index, one_day_btc.values, label="BTC Close", linewidth=1.5)
+# Extract hour of day
+df_30d["hour"] = df_30d.index.hour
 
-ax.xaxis.set_major_locator(mdates.HourLocator(interval=2))
-ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+# Average close per hour of day for BTC and ETH
+hourly_btc = df_30d.groupby("hour")["close"].mean()
+hourly_eth = df_30d.groupby("hour")["eth_close"].mean()
 
-ax.set_title("Veränderung der BTC-Close-Preise über den Tag")
-ax.set_xlabel("Zeit")
-ax.set_ylabel("Close Preis (BTC)")
-ax.grid(True, linestyle="--", alpha=0.5)
-ax.legend()
+fig, ax1 = plt.subplots(figsize=(12, 5))
+ax2 = ax1.twinx()  # second y-axis for ETH
+
+# BTC on left y-axis
+line1 = ax1.plot(
+    hourly_btc.index,
+    hourly_btc.values,
+    marker="o",
+    linewidth=2,
+    color="tab:blue",
+    label="BTC Close (avg)"
+)
+
+# ETH on right y-axis
+line2 = ax2.plot(
+    hourly_eth.index,
+    hourly_eth.values,
+    marker="s",
+    linewidth=2,
+    color="tab:orange",
+    label="ETH Close (avg)"
+)
+
+ax1.set_title("Durchschnittliche stündliche BTC- und ETH-Close-Preise (letzte 30 Tage)")
+ax1.set_xlabel("Stunde des Tages")
+ax1.set_ylabel("BTC Close Preis")
+ax2.set_ylabel("ETH Close Preis")
+
+ax1.set_xticks(range(0, 24))
+ax1.grid(True, linestyle="--", alpha=0.6)
+
+# Combine legends from both axes
+lines = line1 + line2
+labels = [l.get_label() for l in lines]
+ax1.legend(lines, labels, loc="best")
 
 plt.tight_layout()
-plt.savefig("../../images/02_btc_close_day.png")
-plt.close()
-
-
-## ETH
-
-one_day_eth = df.loc[start:end, "eth_close"]
-
-fig, ax = plt.subplots(figsize=(14, 5))
-ax.plot(one_day_eth.index, one_day_eth.values, label="ETH Close", color="orange", linewidth=1.5)
-
-ax.xaxis.set_major_locator(mdates.HourLocator(interval=2))
-ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
-
-ax.set_title("Veränderung der ETH-Close-Preise über den Tag")
-ax.set_xlabel("Zeit")
-ax.set_ylabel("Close Preis (ETH)")
-ax.grid(True, linestyle="--", alpha=0.5)
-ax.legend()
-
-plt.tight_layout()
-plt.savefig("../../images/02_eth_close_day.png")
+plt.savefig("../../images/02_btc_eth_close_together.png")
 plt.close()
 
 
