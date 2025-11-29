@@ -42,8 +42,27 @@ def add_rsi(df: pd.DataFrame, col: str, window: int = 14) -> pd.DataFrame:
     df["rsi"] = 100 - (100 / (1 + rs))
     return df
 
+def add_atr(df: pd.DataFrame, window: int) -> pd.DataFrame:
+    df = df.copy()
+
+    prev_close = df["close"].shift(1)
+
+    # True Range
+    true_range = np.maximum.reduce([
+        df["high"] - df["low"],
+        (df["high"] - prev_close).abs(),
+        (df["low"] - prev_close).abs()
+    ])
+
+    # ATR
+    atr_abs = pd.Series(true_range).rolling(window=window).mean()
+    df[f"atr_{window}"] = atr_abs / df["close"]
+
+    return df
+
+
 def generate_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Hauptfunktion: ruft alle Feature-Schritte auf."""
+    """Hauptfunktion: ruft alle Feature-Schritte auf"""
     df = df.copy()
     df = df.drop(columns=["trade_count"], errors="ignore")
     df = add_returns(df)
@@ -55,5 +74,8 @@ def generate_features(df: pd.DataFrame) -> pd.DataFrame:
 
     # RSI
     df = add_rsi(df, col="close", window=24)
+
+    # ATR
+    df = add_atr(df, window=24)
 
     return df
