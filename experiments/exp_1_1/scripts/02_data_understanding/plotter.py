@@ -15,6 +15,15 @@ df = pd.read_parquet(file_path)
 df["timestamp"] = pd.to_datetime(df["timestamp"])
 df = df.sort_values("timestamp").set_index("timestamp")
 
+# Describe data
+
+print(df.dtypes)
+
+print(df.isna().sum())
+
+desc = df.describe()
+print(df.describe().to_string())
+
 
 
 # 1) Plot the closing price of BTC over time
@@ -105,11 +114,47 @@ plt.close()
 
 
 # 3) Average BTC high-low range per hour (based on last year)
-# noch erwartet
+
+eend = df.index.max()
+start = end - pd.Timedelta(days=365)
+df_year = df.loc[start:end].copy()
+
+# Hourly range as volatility measure
+df_year["range"] = df_year["high"] - df_year["low"]
+df_year["hour"] = df_year.index.hour
+
+# Average volatility per hour
+hourly_range = df_year.groupby("hour")["range"].mean()
+
+fig, ax = plt.subplots(figsize=(12, 5))
+
+ax.plot(
+    hourly_range.index,
+    hourly_range.values,
+    marker="o",
+    linewidth=2,
+)
+
+ax.set_title("Durchschnittlicher stündlicher High–Low-Range von BTC (auf Basis des letzten Jahres)")
+ax.set_xlabel("Stunde des Tages")
+ax.set_ylabel("Durchschnittlicher High–Low-Range (BTC)")
+
+
+ax.set_xticks(range(24))
+ax.set_xticklabels([f"{h:02d}:00" for h in range(24)], rotation=45, ha="right")
+
+ax.grid(True, linestyle="--", alpha=0.6)
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+
+plt.tight_layout()
+plt.savefig("../../images/02_btc_high-low_range.png")
+plt.close()
 
 
 
 # 4) BTC and ETH intraday close prices for the last day
+
 end = df.index.max()
 start = end - pd.Timedelta(days=30)
 df_30d = df.loc[start:end].copy()

@@ -59,20 +59,45 @@ Bar data example:
 Analyse historischer BTC-Preisdaten, um die Struktur, Eigenschaften und das Verhalten der Zeitreihe zu verstehen.
 Ziel ist es, wichtige statistische Abhängigkeiten, sich wiederholende Muster und Besonderheiten zu identifizieren, die die Auswahl der Merkmale und die Architektur des Modells beeinflussen.
 
-**Data Colums**
 
-| Column      | Description                                                                            |
-|-------------|----------------------------------------------------------------------------------------|
-| timestamp   | Der genaue Zeitpunkt (UTC), zu dem die stündliche Kerze geschlossen wurde - Zeitindex. |
-| open        | Der BTC-Preis zu Beginn des Stundenintervalls.                                         |
-| high        | Der höchste BTC-Preis, der während dieser Stunde erreicht wurde.                       |
-| low         | Der niedrigste BTC-Preis, der während dieser Stunde erreicht wurde.                    |
-| close       | Der BTC-Preis am Ende des Stundenintervalls (Zielvariable).                            |
-| volume      | Das gehandelte BTC-Volumen während der Stunde - Marktaktivität.                        |
-| trade_count | Anzahl der ausgeführten Trades innerhalb einer Stunde.                                 |
-| vwap        | Volumengewichteter Durchschnittspreis für die Stunde.                                  |
-| eth_close   | Der stündliche Schlusskurs von Ethereum (ETH).                                         |
+Bei der Datenprüfung konnten keine fehlenden Werte (NA/NaN) festgestellt werden.
 
+**Data Columns**
+
+| Column              | Description                                                                            |
+|---------------------|----------------------------------------------------------------------------------------|
+| timestamp           | Der genaue Zeitpunkt (UTC), zu dem die stündliche Kerze geschlossen wurde - Zeitindex. |
+| open (float)        | Der BTC-Preis zu Beginn des Stundenintervalls.                                         |
+| high (float)        | Der höchste BTC-Preis, der während dieser Stunde erreicht wurde.                       |
+| low (float)         | Der niedrigste BTC-Preis, der während dieser Stunde erreicht wurde.                    |
+| close (float)       | Der BTC-Preis am Ende des Stundenintervalls (Zielvariable).                            |
+| volume (float)      | Das gehandelte BTC-Volumen während der Stunde - Marktaktivität.                        |
+| trade_count (float) | Anzahl der ausgeführten Trades innerhalb einer Stunde.                                 |
+| vwap (float)        | Volumengewichteter Durchschnittspreis für die Stunde.                                  |
+| eth_close (float)   | Der stündliche Schlusskurs von Ethereum (ETH).                                         |
+
+
+**Descritive Statistics**
+
+| Statistic    | open          | high          | low           | close          | volume       | trade_count   | vwap           | eth_close    |
+|--------------|---------------|---------------|---------------|----------------|--------------|---------------|----------------|--------------|
+| count        | 42339.000000  | 42339.000000  | 42339.000000  | 42339.000000   | 42339.000000 | 42339.000000  | 42339.000000   | 42339.000000 |
+| mean         | 53085.164609  | 53295.084529  | 52861.723574  | 53084.377853   | 78.447927    | 1775.976806   | 52159.513397   | 2513.903310  |
+| std          | 29053.359436  | 29126.455657  | 28982.046140  | 29052.349537   | 180.463969   | 3234.410173   | 29774.942871   | 920.348506   |
+| min          | 15627.650000  | 15750.440000  | 8200.000000   | 15631.840000   | 0.000000     | 0.000000      | 0.000000       | 722.000000   |
+| 25%          | 29218.204031  | 29298.214064  | 29133.980952  | 29216.630861   | 0.015927     | 5.000000      | 28437.060330   | 1771.182339  |
+| 50% (median) | 44716.370000  | 44988.310000  | 44444.480000  | 44728.140000   | 7.310082     | 530.000000    | 43825.937372   | 2405.479000  |
+| 75%          | 66949.332500  | 67166.909250  | 66729.690465  | 66939.260000   | 72.199770    | 2395.500000   | 66653.792593   | 3231.658500  |
+| max          | 126093.044500 | 126262.032000 | 125280.720000 | 126117.150000  | 5213.685947  | 110487.000000 | 125566.851844  | 4933.850000  |
+
+Die Werte zeigen eine große Bandbreite sowohl bei den BTC-Preisschwankungen als auch bei den Volumen- und Handelsaktivitätsindikatoren.
+
+- Preise (OHLC): der durchschnittliche BTC-Preis liegt bei etwa 53.000 USD, jedoch mit einer sehr hohen Standardabweichung von etwa 29.000 USD, was auf starke langfristige Marktbewegungen hindeutet. Der Tiefstwert von 8.200 US-Dollar und der Höchstwert von über 126.000 US-Dollar zeigen eine enorme Volatilität im betrachteten Zeitraum.
+- Volumen und Trade Count: das Handelsvolumen weist eine stark asymmetrische Verteilung auf: der Median liegt bei nur 7,31, während der Höchstwert bei über 5200 liegt. Auch die Anzahl der Transaktionen variiert stark, und zwar von 0 bis zu über 110.000 pro Stunde. Dies deutet auf große Unterschiede in der Marktaktivität zwischen ruhigen und hochvolatilen Phasen hin.
+- VWAP: der durchschnittliche VWAP liegt bei 52.159 USd und schwankt ähnlich wie die anderen Preisvariablen, was eine stabile Preisstruktur bestätigt.
+- ETH Close: der durchschnittliche Schlusskurs von ETH liegt bei etwa 2514 US-Dollar, ebenfalls mit einer hohen Streuung. Dies bestätigt, dass auch der ETH-Markt während des Analysezeitraums starken Schwankungen unterworfen war.
+
+Insgesamt zeigen die Werte eine hohe Volatilität, große Unterschiede in der Marktaktivität und starke Preisschwankungen. Diese Merkmale sind für die nachfolgende Modellierung wichtig und bestätigen die Zweckmäßigkeit der Wahl des LSTM-Modells.
 
 **Script**
 
@@ -94,8 +119,42 @@ Damit das Modell nicht nur auf Wachstumsphasen des Marktes trainiert werden konn
 
 Dieser Bereich umfasst starke Preisrückgänge, beispielsweise den starken Einbruch, der im Dezember 2021 einsetzte, wodurch das Modell verschiedene Marktbedingungen berücksichtigen kann.
 
+*2) Durchschnittlicher BTC-OHLC-Verlauf und Handelsvolumen pro Stunde (auf Basis des letzten Jahres)*
+
+Wir untersuchen den Durchschnittswert von BTC-OHLC für das letzte Jahr in stündlichen Intervallen. Außerdem wird das durchschnittliche Handelsvolumen pro Stunde angezeigt.
+Das Diagramm hat zwei Y-Achsen:
+- linke Achse: Preis (Eröffnung, Maximum, Minimum, Schlusskurs)
+- rechte Achse: durchschnittliches Handelsvolumen Die X-Achse zeigt die Zeit an, wobei jeder Punkt den Durchschnittswert für diese Stunde während des gesamten Jahres darstellt.
+
+
+![OHLC-Verlauf](images/02_btc_ohlcv_mean_intraday.png)
+
+Es ist ersichtlich, dass sich die Eröffnungs- und Schlusskurse relativ stabil entwickeln, ohne große Schwankungen zwischen den Stunden. Die Höchst- und Tiefstkurse weisen jedoch zu bestimmten Tageszeiten erhebliche Schwankungen auf. Das Handelsvolumen korreliert teilweise mit diesen Schwankungen, steigt jedoch nicht immer synchron an.
+Eine große Bandbreite von Höchst- und Tiefstwerten bedeutet eine erhöhte Volatilität, die oft ein Indikator für eine Trendwende oder stärkere Bewegungen ist.
+
+
+*3) Durchschnittlicher stündlicher High–Low-Range von BTC (auf Basis des letzten Jahres)*
+
+Dieser Graph zeigt den durchschnittlichen Unterschied zwischen High und Low („Range“) pro Stunde. Jede Markierung steht für eine Stunde des Tages und zeigt, wie volatil der BTC-Preis im Durchschnitt ist.
+
+![High-Low-Range](images/02_btc_high-low_range.png)
+
+Es gibt eine deutlich erkennbare Volatilitätsphase zwischen 13:00 und 17:00 Uhr. Der Bereich nimmt dort stark zu und erreicht sein Tageshoch, bevor er nach 18:00 Uhr wieder abnimmt. Dies spiegelt erneut die hohe Volatilität des Marktes wider.
+In Stunden mit einem hohen durchschnittlichen Bereich ist die Wahrscheinlichkeit, dass der Schlusskurs deutlich fällt oder steigt, höher,  d. h. es gibt ein stärkeres Signal für die Klassifizierung „aufwärts/abwärts”.
+
+
 *4) Veränderung der BTC/ETH-Close-Preise über den letzten Tag*
 
+Das Diagramm zeigt den durchschnittlichen stündlichen Schlusskurs (Close) für BTC und ETH in den letzten 30 Tagen.
+Das Diagramm hat zwei Y-Achsen:
+- links: BTC Close
+- rechts: ETH Close Die Punkte geben den Durchschnittswert pro Stunde an.
+
+![BTC/ETH-Close-Preise](images/02_btc_eth_close_together.png)
+
+BTC und ETH weisen sehr ähnliche Kurven auf. Beide Kritowährungen steigen und fallen oft synchron.
+Die starke Parallelität deutet auf eine hohe Korrelation zwischen BTC und ETH hin. 
+Dies deutet darauf hin, dass die ETH-Daten als zusätzliche Funktionen tatsächlich nützlich sind, um das LSTM-Modell zu verbessern.
 
 *5) Korrelation zwischen BTC und ETH (letzte 30 Tage)*
 
