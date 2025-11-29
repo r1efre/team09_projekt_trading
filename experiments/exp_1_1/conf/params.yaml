@@ -1,5 +1,5 @@
 DATA_ACQUISITION:
-  DATA_PATH: 'C:/5.Semester/Unternehmenssoftware/data/raw'
+  DATA_PATH: '/Users/rita/Desktop/Uni Bachelor/3.1/Unternehmenssoftware/data/raw'
   START_DATE: '2021-01-01'
   END_DATE: '2025-11-01'
   SYMBOLS:
