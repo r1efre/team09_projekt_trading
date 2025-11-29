@@ -8,4 +8,6 @@ DATA_ACQUISITION:
 DATA_PREP:
   PROCESSED_PATH: 'C:/5.Semester/Unternehmenssoftware/data/processed'
   RAW_DATA_FILE: 'dataMerged.parquet'
-  FEATURE_PATH: '../03_pre_split_prep/features.txt'
+  RETURN_PERIODS: [1, 6, 24]
+  EMA_PERIODS: [6, 24]
+  RSI_ATR_WINDOW: 24

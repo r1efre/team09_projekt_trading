@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-#Wenn die Bewegung in der nächsten Stunde kleiner ist als 25% der typischen Tagesvolatilität, ist sie wahrscheinlich unbedeutend.
+#Wenn die Bewegung in der nächsten Stunde kleiner ist als 25% der typischen Tagesvolatilität, ist sie unbedeutend.
 def classify_trend(row, vol_factor):
     r = row["return_1h_shifted"]
     vol = row["atr_24"]
