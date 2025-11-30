@@ -219,7 +219,18 @@ Ein Trend wird als neutral klassifiziert, wenn:
 
 Das bedeutet: Bewegungen, die weniger als 25 % der typischen täglichen Volatilität ausmachen, gelten als marktübliches Rauschen und werden nicht als richtungsstarker Trend gewertet.
 
-Nach der Features und Target Generierung werden NaN Werte entfernt, die durch das Feature Engineering entstanden sind,
+Nach der Features und Target Generierung werden NaN Werte entfernt, die durch das Feature Engineering entstanden sind.
+
+### Deskriptive Statistiken
+
+![Deskriptive Statistiken](images/03_Deskriptive_Statistiken.png)
+
+- BTC- und ETH-Returns haben kleine Mittelwerte (≈ 0) 
+- Die Standardabweichung steigt mit längeren Zeitfenstern (1h < 6h < 24h) → je größer das Zeitintervall, desto größer die erwartete Schwankung.
+- ETH ist volatiler als BTC → die Standardabweichungen von ETH-Returns sind in jedem Zeitfenster höher als bei BTC.
+- Die Return-Verteilungen zeigen deutliche Ausreißer (z. B. bei 24-h-Returns: max ≈ +0.23, min ≈ −0.20), was auf starke Marktbewegungen hinweist
+- Der RSI liegt im Durchschnitt bei ~50, was bedeutet, dass der Markt über den Gesamtzeitraum weder signifikant überkauft (>70) noch überverkauft (<30) war
+- Indikatoren wie EMA (6h/24h) haben hohe Werte, da sie direkt auf dem BTC-Preis basieren, was ihre Skalierung von Returns klar unterscheidet
 
 ### Visualisierung 
 
