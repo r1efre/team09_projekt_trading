@@ -109,7 +109,7 @@ df = data.set_index('timestamp')
 # Rolling Window (168 Stunden = 1 Woche)
 window_size = 168
 
-# Berechne ROLLING Correlations mit Zeitverschiebung
+# Berechne Rolling Correlations mit Zeitverschiebung
 correlation_lag1 = df['btc_return_1h'].shift(1).rolling(window=window_size).corr(df['btc_return_1h'])
 
 # Visualisierung
@@ -141,23 +141,24 @@ plt.show()
 
 
 
-# 1) Index zurück in Spalte + Zeitraum wählen (letzte 12 Monate)
-df = df.reset_index()  # nur falls index = timestamp war
+#Zusammenhang zwischen EMA Differenz und BTC_Return
+
+df = df.reset_index()
 end = df["timestamp"].max()
 start = end - pd.Timedelta(days=365)
 
 df_period = df[(df["timestamp"] >= start) & (df["timestamp"] <= end)].copy()
 
-# 2) EMA-Differenz berechnen
+#EMA-Differenz berechnen
 df_period["ema_diff"] = df_period["ema_6"] - df_period["ema_24"]
 
-# 3) Glättung definieren (z.B. 24h oder 72h)
+# 3) Glättung definieren
 smooth_window = 100
 
+#Glättung
 df_period["ema_diff_smooth"] = df_period["ema_diff"].rolling(window=smooth_window).mean()
 df_period["btc_return_1h_smooth"] = df_period["btc_return_1h"].rolling(window=smooth_window).mean()
 
-# 4) Plot vorbereiten
 fig, ax1 = plt.subplots(figsize=(14, 6))
 
 # Geglättete EMA-Differenz
@@ -172,7 +173,7 @@ ax1.set_ylabel("EMA6 - EMA24 (smooth)", color="blue")
 ax1.tick_params(axis='y', labelcolor='blue')
 ax1.grid(True, linestyle="--", alpha=0.3)
 
-# 5) Zweite Y-Achse für geglätteten BTC Return
+#Zweite Y-Achse für geglätteten BTC Return
 ax2 = ax1.twinx()
 ax2.plot(
     df_period["timestamp"],
@@ -184,7 +185,7 @@ ax2.plot(
 ax2.set_ylabel("BTC Return 1h (smooth)", color="red")
 ax2.tick_params(axis='y', labelcolor='red')
 
-# 6) Titel & kombinierte Legende
+#Titel & kombinierte Legende
 plt.title(f"EMA6 - EMA24 vs. BTC 1h Return (geglättet, letzte 12 Monate)", fontsize=14)
 lines1, labels1 = ax1.get_legend_handles_labels()
 lines2, labels2 = ax2.get_legend_handles_labels()
