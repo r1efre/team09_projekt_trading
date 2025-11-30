@@ -30,6 +30,7 @@ def add_ema(df: pd.DataFrame, col: str, ema_periods: list[int], features: list[s
 
     return df, features
 
+
 def add_rsi(df: pd.DataFrame, col: str, window: int) -> pd.DataFrame:
     """RSI auf Basis von Schlusskursen"""
     df = df.copy()

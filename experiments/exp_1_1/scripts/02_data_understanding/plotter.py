@@ -7,8 +7,9 @@ import yaml
 
 # Load API credentials from YAML configuration file
 params = yaml.safe_load(open("../../conf/params.yaml"))
-DATA_PATH = params["DATA_ACQUISITION"]["DATA_PATH"]
-file_path = f"{DATA_PATH}/dataMerged.parquet"
+data_path = params["DATA_ACQUISITION"]["DATA_PATH"]
+raw_data_file = params['DATA_PREP']['RAW_DATA_FILE']
+file_path = f"{data_path}/{raw_data_file}"
 
 # Load data, convert timestamp column to datetime and sort by timestamp
 df = pd.read_parquet(file_path)
