@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import yaml
 import pandas as pd
 import matplotlib.pyplot as plt

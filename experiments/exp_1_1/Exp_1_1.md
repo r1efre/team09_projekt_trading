@@ -287,5 +287,19 @@ Nach der Features und Target Generierung werden NaN Werte entfernt, die durch da
 - BTC-Returns folgen ähnlichen Mustern: Geglättete Returns bewegen sich häufig in dieselbe Richtung wie die EMA-Differenz
 - Zusammenhang zwischen EMA-Differenz und BTC-Return erkennbar
 
+---
+
+## Step 3 - Split Data
+
+**Script**
+
+[scripts/04_split_data/split.py](scripts/04_split_data/split.py)
+
+
+Die Daten werden aufgeteilt in:
+- Trainingsdaten (ca. 70% der Daten) - 2021-01-02 bis 2024-05-19
+- Validierungsdaten (ca. 20% der Daten) - 2024-05-20 bis 2025-05-07
+- Testdaten (ca. 10% der Daten) - 2025-05-08 bis 2025-10-31
+
 
 
