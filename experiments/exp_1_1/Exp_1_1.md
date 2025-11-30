@@ -5,7 +5,7 @@
 **Target**
 
 Ziel dieses Projekts ist die Vorhersage der Trendrichtung des Bitcoin-Preises in der nächsten Stunde.
-Für die Modellierung werden stündliche Bitcoin-Daten im Zeitraum 01.01.2024 bis 01.11.2025 als Trainings- und Validierungsgrundlage verwendet.
+Für die Modellierung werden stündliche Bitcoin-Daten im Zeitraum 01.01.2021 bis 01.11.2025 als Trainings- und Validierungsgrundlage verwendet.
 Auf Basis dieser historischen Stundenwerte soll das Modell lernen, für jeden Zeitpunkt vorherzusagen, ob der Bitcoinpreis in der darauffolgenden Stunde steigt, fällt oder innerhalb eines definierten Schwellenwerts neutral bleibt.
 Die Trendrichtung wird dabei anhand des prozentualen Preisreturns zwischen dem aktuellen und dem nachfolgenden Schlusskurs berechnet.
 Bewegungen innerhalb einer kleinen Toleranzzone werden als neutral klassifiziert, um Marktrauschen zu reduzieren und stabile Labels zu erzeugen.
@@ -14,14 +14,15 @@ Bewegungen innerhalb einer kleinen Toleranzzone werden als neutral klassifiziert
 
 Das Modell verarbeitet pro Stunde eine Reihe Features, die Preisstruktur, Trend, Momentum und Cross-Asset-Information abbilden:
 - Preis- und Volumenmerkmale: open, high, low, close, volume, VWAP (volumengewichteter Durchschnittspreis)
-- Momentum-Merkmale: return_1h und return_6h --> prozentuale Preisveränderung über 1 bzw. 6 Stunden
+- Momentum-Merkmale: return_1h, return_6h, return_24h --> prozentuale Preisveränderung über 1, 6 Stunden bzw. 24 Stunden
 - Trendindikatoren: EMA_6 und EMA_24 --> normalisierte exponentielle gleitende Durchschnitte
 - RSI (Trendstärke-Indikator aus Preisänderungen)
-- Cross-Asset-Features anhand von Ethereum: ETH_Close, ETH_return_1h, ETH_return_6h, ETH/BTC Ratio (relative Stärke zwischen ETH und BTC)
+- ATR (Maß für die Volatilität des Marktes)
+- Cross-Asset-Features anhand von Ethereum: ETH_Close, ETH_return_1h, ETH_return_6h, ETH_return_24h, ETH/BTC Ratio (relative Stärke zwischen ETH und BTC)
 
 ### Procedure Overview:
 
-- Datensammlung: Erhebung von stündlichen Bitcoin- und Ethereum-Daten im Zeitraum 01.01.2024 bis 01.11.2025
+- Datensammlung: Erhebung von stündlichen Bitcoin- und Ethereum-Daten im Zeitraum 01.01.2021 bis 01.11.2025
 - Feature Engineering: Berechnung aller oben beschriebenen preis-, volumen-, trend- und momentumbezogenen Merkmale sowie Cross-Asset-Features.
 - Labelgenerierung: Berechnung des 1-Stunden-Returns und Klassifikation der Trendrichtung in Up / Down / Neutral anhand einer Toleranzschwelle.
 - Modelltraining: Training eines LSTM-Netzwerks, das aus 48-stündigen Sequenzen die Trendklasse der nächsten Stunde vorhersagt.
@@ -167,7 +168,113 @@ Auf dem Diagramm ist deutlich zu erkennen, dass die Datenpunkte entlang einer au
 Dies deutet auf eine sehr starke positive lineare Abhängigkeit zwischen BTC und ETH hin.
 Der berechnete Pearson-Korrelationskoeffizient r = 0,96 bestätigt diese Abhängigkeit zusätzlich.
 
+---
 
- 
+## Step 3 - Data Preparation (Pre-Split)
+
+**Script**
+
+- [scripts/03_pre_split_prep/features.py](scripts/03_pre_split_prep/features.py)
+- [scripts/03_pre_split_prep/targets.py](scripts/03_pre_split_prep/targets.py)
+- [scripts/03_pre_split_prep/main.py](scripts/03_pre_split_prep/main.py)
+- [scripts/03_pre_split_prep/plot_features.py](scripts/03_pre_split_prep/plot_features.py)
+
+### Features Berechnung
+
+Folgende Features werden in dem Skript features.py berechnet. 
+
+**Data Columns**
+
+| Column                   | Description                                                                                                                                    |
+|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| btc_return (1h, 6h, 24h) | Prozentualer Preisänderung des Close Preises in den letzten 6h, 24h oder der letzten Stunde.                                                   |
+| eth_return (1h, 6h, 24h) | Prozentualer Preisänderung des Close Preises von Ethereum in den letzten 6h, 24h oder der letzten Stunde.                                      |
+| eth_btc_ratio            | Relative Stärke von Ethereum Close Preis gegenüber Bitcoin Close Preis                                                                         |
+| ema_6 und ema_24         | Exponentiell gewichteter gleitender Durchschnitt, wobei neuere Close Preise von Bitcoin mehr Gewicht bekommen                                  |
+| rsi                      | Momentum-Indikator, berechnet über die letzten 24 Stunden -> zeigt on Markt überkauft oder überverkauft ist                                    |
+| atr_24                   | Volatilität -> Misst, wie stark sich der Bitcoin-Preis über die letzten 24 Stunden durchschnittlich bewegt hat, relativ zum aktuellen Preis.   |
+                                                           
+
+### Target Berechnung
+
+Das Projekt hat das Ziel, die Trendrichtung des Bitcoin-Schlusskurses für die jeweils nächste Stunde vorherzusagen. Die Trendrichtung wird dabei in drei Klassen eingeteilt:
+
+- UP: 1
+- Neutral: 0
+- DOWN: -1
+
+Der Trendwert in einer Zeile zum Zeitpunkt t beschreibt die Kursbewegung von t bis t+1. Die Klassifizierung erfolgt auf Grundlage des stündlichen Returns btc_return_1h, der in der Zeile t+1 steht.
+
+- Ist btc_return_1h(t+1) > 0, wird die Klasse UP vergeben.
+- Ist btc_return_1h(t+1) < 0, wird die Klasse DOWN vergeben.
+- Liegt der Wert innerhalb einer definierten Toleranzzone, wird die Klasse NEUTRAL vergeben.
+
+![Trend Berechnung](images/trendBerechnung.png)
+
+Die Toleranzzone ist dabei nicht statisch, sondern wird dynamisch an die aktuelle Marktvolatilität angepasst.
+Dazu wird die typische Tagesvolatilität anhand des ATR(24h)-Indikators geschätzt.
+
+Ein Trend wird als neutral klassifiziert, wenn:
+∣btc_return_1h(t+1)∣ < 0.25×ATR24​(t)
+
+Das bedeutet: Bewegungen, die weniger als 25 % der typischen täglichen Volatilität ausmachen, gelten als marktübliches Rauschen und werden nicht als richtungsstarker Trend gewertet.
+
+Nach der Features und Target Generierung werden NaN Werte entfernt, die durch das Feature Engineering entstanden sind,
+
+### Visualisierung 
+
+**Plots**
+
+*1) Trendverteilung des Bitcoin-Marktes im Zeitverlauf (2-Monats-Intervalle)*
+
+![Trend Verteilung](images/03_Trend_Verteilung_pro_2Monate.png)
+
+- Jede Säule zeigt, wie viele Stunden innerhalb eines 2-Monats-Fensters als UP, DOWN oder NEUTRAL klassifiziert wurden.
+- Die Verteilung bleibt über die Jahre stabil
+- keine strake Dominanz einer bestimmten Trendklasse
+- Beim Splitten der Daten sollten alle Trendklassen sowohl im Trainings- als auch im Validierungsdatensatz ausreichend vertreten sein
+
+*2) Entwicklung der Bitcoin-Volatilität (ATR-24h) von 2021 bis 2025)*
+
+![Bitcoin-Volatilität](images/03_Zeitreihenplot_atr24.png)
+
+- Zeigt die tägliche prozentuale Volatilität von Bitcoin gemessen über ein 24-Stunden-Fenster
+- Hohe Ausschläge markieren Phasen starker Marktbewegungen, während ruhige Perioden niedrige ATR-Werte zeigen.
+- Die Grafik verdeutlicht, dass die Volatilität langfristig abnimmt, mit vereinzelten starken Peaks
+
+*3) Zusammenhang zwischen BTC- und ETH-Returns*
+
+![BTC ETH Return Korrelation](images/03_return_correlation.png)
+
+- Zeigt die lineare Beziehung zwischen stündlichen BTC- und ETH-Returns.
+- Die deutliche Aufwärtswolke und der Pearson-Korrelationswert (r = 0.83) deuten auf eine sehr starke positive Korrelation hin.
+- Daraus lässt sich schließen: Steigt BTC, steigt ETH typischerweise ebenfalls.
+
+*4) Rolling Lag-Korrelation zwischen ETH und BTC Returns (zeitversetzt um 1 Stunde)*
+
+![BTC ETH Return Korrelation zeitversetzt](images/03_eth_btc_corr_zeitversetzt.png)
+
+- Zeigt, ob vergangene ETH-Returns (lagged um 1h) Bewegungen im BTC-Return vorhersagen können.
+- Die Korrelation bleibt über alle Jahre sehr nahe bei 0 – kaum systematischer Zusammenhang erkennbar.
+- Positive oder negative Ausreißer treten nur kurzfristig auf und wirken zufällig, nicht strukturell.
+- ETH Return nicht hilfreich bei der Vorhersage der zuküngtigen BTC Entwicklung
+
+*5) Rolling Lag-Korrelation zwischen BTC und BTC Returns (zeitversetzt um 1 Stunde)*
+
+![BTC BTC Return Korrelation zeitversetzt](images/03_btc_btc_corr_zeitversetzt.png)
+
+- Zeigt, wie stark der BTC-Return der letzten Stunde mit dem BTC-Return der aktuellen Stunde zusammenhängt.
+- Die Korrelation schwankt um 0, was zeigt, dass Vergangenheits-BTC kaum Einfluss auf die nächste Stunde hat.
+- Es gibt keine stabilen positiven oder negativen Muster, daher liefern lagged BTC-Returns keine sinnvolle Vorhersagekraft.
+- Die gleiche Analyse wurde durchgeführt, wo BTC-Return um 12 und um 24 Stunden zurückversetzt wurde. Auch bei diesen Analysen ließen sich keine Zusammenhänge feststellen.
+
+*6) EMA-Differenz (6h–24h) und BTC-Return (1h) im Vergleich über die letzten 12 Monate*
+
+![EMA-Differenz und BTC-Return](images/03_ema_dif.png)
+
+- EMA-Differenz als Trendindikator: Positive Werte zeigen kurzfristige Aufwärtsdynamik, negative Werte eine kurzfristige Trendabschwächung.
+- BTC-Returns folgen ähnlichen Mustern: Geglättete Returns bewegen sich häufig in dieselbe Richtung wie die EMA-Differenz
+- Zusammenhang zwischen EMA-Differenz und BTC-Return erkennbar
+
 
 

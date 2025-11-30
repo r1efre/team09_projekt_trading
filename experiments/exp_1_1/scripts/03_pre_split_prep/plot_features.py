@@ -47,12 +47,33 @@ plt.tight_layout()
 plt.show()
 
 
-# 5) Correlation between BTC and ETH
+
+
+
+#Zeitreihenplot ATR_24 (2021–2025)
+
+plt.figure(figsize=(14, 5))
+plt.plot(data["timestamp"], data["atr_24"], label="ATR 24h (in %)")
+
+plt.title("Zeitreihe: ATR (24h) über den gesamten Zeitraum 2021–2025")
+plt.xlabel("Datum")
+plt.ylabel("ATR 24 (prozentuale Volatilität)")
+plt.grid(True, linestyle="--", alpha=0.4)
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+
+
+
+
+
+# Correlation between BTC and ETH
 
 btc = data["btc_return_1h"]
 eth = data["eth_return_1h"]
 
-# Linear fit for visualizing correlation
+# Pearson-Korrelationskoeffizienten r
 corr = btc.corr(eth)
 slope, intercept = np.polyfit(btc, eth, 1)
 x_line = np.linspace(btc.min(), btc.max(), 200)
@@ -77,6 +98,10 @@ ax.text(
     va="top",
     bbox=dict(boxstyle="round", facecolor="white", alpha=0.8)
 )
+plt.show()
+
+
+
 
 
 #Korrelation BTC Return und BTC Return um eine Stunde zeitversetzt
@@ -112,19 +137,7 @@ fig.autofmt_xdate()
 plt.tight_layout()
 plt.show()
 
-#Zeitreihenplot ATR_24 (2021–2025)
 
-plt.figure(figsize=(14, 5))
-plt.plot(data["timestamp"], data["atr_24"], label="ATR 24h (in %)")
-
-plt.title("Zeitreihe: ATR (24h) über den gesamten Zeitraum 2021–2025")
-plt.xlabel("Datum")
-plt.ylabel("ATR 24 (prozentuale Volatilität)")
-plt.grid(True, linestyle="--", alpha=0.4)
-plt.legend()
-
-plt.tight_layout()
-plt.show()
 
 
 
