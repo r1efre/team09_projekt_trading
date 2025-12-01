@@ -185,15 +185,14 @@ Folgende Features werden in dem Skript features.py berechnet.
 
 **Data Columns**
 
-| Column                   | Description                                                                                                                                    |
-|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
-| btc_return (1h, 6h, 24h) | Prozentualer Preisänderung des Close Preises in den letzten 6h, 24h oder der letzten Stunde.                                                   |
-| eth_return (1h, 6h, 24h) | Prozentualer Preisänderung des Close Preises von Ethereum in den letzten 6h, 24h oder der letzten Stunde.                                      |
-| eth_btc_ratio            | Relative Stärke von Ethereum Close Preis gegenüber Bitcoin Close Preis                                                                         |
-| ema_6 und ema_24         | Exponentiell gewichteter gleitender Durchschnitt, wobei neuere Close Preise von Bitcoin mehr Gewicht bekommen                                  |
-| rsi                      | Momentum-Indikator, berechnet über die letzten 24 Stunden -> zeigt on Markt überkauft oder überverkauft ist                                    |
-| atr_24                   | Volatilität -> Misst, wie stark sich der Bitcoin-Preis über die letzten 24 Stunden durchschnittlich bewegt hat, relativ zum aktuellen Preis.   |
-                                                           
+| Column                   | Description                                                                                                                                  | Purpose                                                                                                                |
+|--------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| btc_return (1h, 6h, 24h) | Prozentualer Preisänderung des Close Preises in den letzten 6h, 24h oder der letzten Stunde.                                                 | Erkennen von kurz-, mittelfristigen Trends sowie Tagestrends                                                           |
+| eth_return (1h, 6h, 24h) | Prozentualer Preisänderung des Close Preises von Ethereum in den letzten 6h, 24h oder der letzten Stunde.                                    | Korrelierte Märkte -> ETH kann früher und stärker reagieren als BTC                                                    |
+| eth_btc_ratio            | Relative Stärke von Ethereum Close Preis gegenüber Bitcoin Close Preis                                                                       | Cross-Asset -> zeigt, ob ETH stärker oder schwächer als BTC performt → Hinweis auf Marktstimmung                       |
+| ema_6 und ema_24         | Exponentiell gewichteter gleitender Durchschnitt, wobei neuere Close Preise von Bitcoin mehr Gewicht bekommen                                | Trendindikatoren reagieren schnell auf Marktveränderungen -> Erkennt ob der Trend aktuell beschleunigt oder abschwächt |
+| rsi                      | Momentum-Indikator, berechnet über die letzten 24 Stunden -> zeigt on Markt überkauft oder überverkauft ist                                  | Erkennung von Marktphase (überkauft, überverkauft) hilft Wendepunkte im Markt zu erkennen                              |
+| atr_24                   | Volatilität -> Misst, wie stark sich der Bitcoin-Preis über die letzten 24 Stunden durchschnittlich bewegt hat, relativ zum aktuellen Preis. | Wichtig für volatilitätsbasierten Toleranzzone                                                                         |
 
 ### Target Berechnung
 
