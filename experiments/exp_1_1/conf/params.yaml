@@ -11,7 +11,8 @@ DATA_PREP:
   RETURN_PERIODS: [1, 6, 24]
   EMA_PERIODS: [6, 24]
   RSI_ATR_WINDOW: 24
-
 SPLIT_DATA:
   TRAIN_DATE: '2024-05-20'
   VALIDATION_DATE: '2025-05-08'
+POST_SPLIT:
+  SCALED_PATH: 'C:/5.Semester/Unternehmenssoftware/data/scaled'
