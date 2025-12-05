@@ -288,7 +288,7 @@ Nach der Features und Target Generierung werden NaN Werte entfernt, die durch da
 
 ---
 
-## Step 3 - Split Data
+## Step 4 - Split Data
 
 **Script**
 
@@ -300,5 +300,42 @@ Die Daten werden aufgeteilt in:
 - Validierungsdaten (ca. 20% der Daten) - 2024-05-20 bis 2025-05-07
 - Testdaten (ca. 10% der Daten) - 2025-05-08 bis 2025-10-31
 
+---
+
+## Step 5 - Post-Split Preparation
+
+**Script**
+
+[scripts/05_post_split/05_normalize_features.py](scripts/05_post_split/05_normalize_features.py)
+
+Alle Feature-Daten werden mit dem StandardScaler normalisiert. 
+Dabei wird der Skalierer nur auf den Trainingsdaten gelernt und anschließend auf Validierungs- und Testdaten angewendet, um Datenleckage zu vermeiden. 
+Durch die Standardisierung liegen alle Features auf einem ähnlichen Wertebereich, was das Training stabiler macht und verhindert, dass einzelne Merkmale das Modell dominieren. 
+Die Zielvariable wird nicht normalisiert, weil es sich um Klassenlabels handelt – sie stehen für diskrete Kategorien (steigend, fallend, neutral) und dürfen deshalb nicht skaliert werden.
+
+---
+
+## Step 6 - Feature Selection
+
+**Script**
+
+[scripts/06_feature_selection/main.py](scripts/06_feature_selection/main.py)
+
+Es wird eine Korrelationsmatrix erstellt, um Features zu ermitteln, die stark miteinander korrelieren und somit redundant sind. 
+Dadurch lassen sich Merkmale identifizieren, die hauptsächlich dieselben Informationen enthalten und das Modell nicht zusätzlich verbessern. 
+Solche Features können anschließend entfernt werden, um Overfitting zu vermeiden.
+
+![Korrelationsmatrix](images/06_corr_matrix.png)
+
+Aufgrund der starken Korrelationen werden folgende Features aus dem Datensatz gelöscht:
+- open
+- high
+- low
+- vwap
+- eth_close
+
+*Ausgewählte und skalierte Features*
+
+![Selected and scaled features](images/selected_scaled_features.png)
 
 
