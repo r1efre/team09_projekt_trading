@@ -12,16 +12,14 @@ class Net(nn.Module):
 
     def __init__(self, input_size):
         super(Net, self).__init__()
-        self.layer_1 = nn.LSTM(input_size=input_size, hidden_size=64, batch_first=True)
-        self.layer_2 = nn.LSTM(input_size=64, hidden_size=32, batch_first=True)
-        self.layer_3 = nn.Linear(32, 3)
+        self.layer_1 = nn.LSTM(input_size=input_size, hidden_size=16, batch_first=True)
+        self.layer_2 = nn.Linear(16, 3)
 
     #x hat die Form (batch_size, seq_len, input_size)
     def forward(self, x):
         out, _ = self.layer_1(x)
-        out, _ = self.layer_2(out)
         out = out[:, -1, :]
-        out = self.layer_3(out)
+        out = self.layer_2(out)
         return out
 
 
@@ -64,11 +62,11 @@ val_loader = DataLoader(
 net = Net(input_size)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(net.parameters(), lr=0.001)
+optimizer = optim.SGD(net.parameters(), lr=0.00001, momentum=0.9)
 
 trainLoss_vals = list()
 ValLoss_vals = list()
-num_epochs = 50
+num_epochs = 150
 for epoch in range(num_epochs):
     net.train()
     running_loss = 0.0
@@ -103,7 +101,7 @@ plt.plot(range(1, num_epochs + 1), trainLoss_vals, marker='o', label='Training L
 plt.plot(range(1, num_epochs + 1), ValLoss_vals, marker='s', label='Validation Loss')
 
 plt.xlabel("Epoch")
-plt.ylabel("MSE Loss")
+plt.ylabel("CrossEntropyLoss")
 plt.title("Training und Validation Loss über Epochen")
 plt.legend()
 plt.grid(True)
