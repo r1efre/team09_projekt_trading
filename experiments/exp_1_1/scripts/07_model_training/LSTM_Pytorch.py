@@ -5,6 +5,7 @@ import torch.nn as nn
 import pandas as pd
 import torch.optim as optim
 from torch.utils.data import DataLoader
+from sklearn.metrics import accuracy_score, f1_score, recall_score
 from BTCSequenceDataset import BTCSequenceDataset
 
 
@@ -18,7 +19,10 @@ class Net(nn.Module):
     #x hat die Form (batch_size, seq_len, input_size)
     def forward(self, x):
         out, _ = self.layer_1(x)
+        #letzter Hidden State als Zusammenfassung der gesamten Sequenz
         out = out[:, -1, :]
+        #Input Hidden State
+        #Output: Für jede Sequenz 3 Zahlen —> Score für jede mögliche Klasse, 3-dimensionales Output pro Sequenz
         out = self.layer_2(out)
         return out
 
@@ -36,6 +40,7 @@ seq = params['MODELING']['SEQUENCE']
 input_size = params['MODELING']['INPUT_SIZE']
 batch_size = params['MODELING']['BATCH_SIZE']
 
+#Definition von Sequenzen
 train_dataset = BTCSequenceDataset(
     x=x_train,
     y=y_train,
@@ -64,10 +69,15 @@ net = Net(input_size)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.00001, momentum=0.9)
 
-trainLoss_vals = list()
-ValLoss_vals = list()
-num_epochs = 150
+trainLoss_vals = []
+ValLoss_vals = []
+val_acc_vals = []
+val_f1_vals = []
+val_recall_vals = []
+
+num_epochs = 200
 for epoch in range(num_epochs):
+    # Training
     net.train()
     running_loss = 0.0
     for inputs, labels in train_loader:
@@ -82,18 +92,47 @@ for epoch in range(num_epochs):
     train_loss = running_loss / len(train_loader)
     trainLoss_vals.append(train_loss)
 
-    # --- Validation ---
+    # Validation
     net.eval()
     runVal_loss = 0.0
+    all_preds = []
+    all_targets = []
+
     with torch.no_grad():
         for inputs, labels in val_loader:
             outputs = net(inputs)
             loss = criterion(outputs, labels)
             runVal_loss += loss.item()
+
+            # Klassen vorhersagen (Argmax über die 3 Logits)
+            preds = outputs.argmax(dim=1)
+
+            all_preds.append(preds.cpu())
+            all_targets.append(labels.cpu())
+
     val_loss = runVal_loss / len(val_loader)
     ValLoss_vals.append(val_loss)
-
     print(f"Epoch {epoch + 1}: Train Loss = {train_loss:.4f}, Val Loss = {val_loss:.4f}")
+
+    # alles zu einem Vektor zusammenfügen
+    all_preds = torch.cat(all_preds).numpy()
+    all_targets = torch.cat(all_targets).numpy()
+
+    # Metriken berechnen
+    val_acc = accuracy_score(all_targets, all_preds)
+    val_f1 = f1_score(all_targets, all_preds, average="macro")
+    val_recall = recall_score(all_targets, all_preds, average="macro")
+
+    val_acc_vals.append(val_acc)
+    val_f1_vals.append(val_f1)
+    val_recall_vals.append(val_recall)
+
+
+print(
+        f"Val Acc: { val_acc_vals[-1]:.3f} | "
+        f"Val F1: {val_f1_vals[-1]:.3f} | "
+        f"Val Recall: {val_recall_vals[-1]:.3f}"
+    )
 
 
 plt.figure(figsize=(8, 5))

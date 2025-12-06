@@ -198,9 +198,9 @@ Folgende Features werden in dem Skript features.py berechnet.
 
 Das Projekt hat das Ziel, die Trendrichtung des Bitcoin-Schlusskurses für die jeweils nächste Stunde vorherzusagen. Die Trendrichtung wird dabei in drei Klassen eingeteilt:
 
-- UP: 1
-- Neutral: 0
-- DOWN: -1
+- UP: 2
+- Neutral: 1
+- DOWN: 0
 
 Der Trendwert in einer Zeile zum Zeitpunkt t beschreibt die Kursbewegung von t bis t+1. Die Klassifizierung erfolgt auf Grundlage des stündlichen Returns btc_return_1h, der in der Zeile t+1 steht.
 
@@ -341,5 +341,56 @@ Aufgrund der starken Korrelationen werden folgende Features aus dem Datensatz ge
 *Ausgewählte und skalierte Features*
 
 ![Selected and scaled features](images/selected_scaled_features.png)
+
+---
+
+## Step 7 - Model Training
+
+**Script**
+
+- [scripts/07_model_training/BTCSequenceDataset.py](scripts/07_model_training/BTCSequenceDataset.py)
+- [scripts/07_model_training/LSTM_Pytorch.py](scripts/07_model_training/LSTM_Pytorch.py)
+- [scripts/07_model_training/random_forest.py](scripts/07_model_training/random_forest.py)
+
+*Nutzung LSTM-Modell*
+
+![LSTM HighLevel](images/LSTM-HighLevel.png)
+
+- Einsatz eines LSTM-Modells zur Vorhersage des kurzfristigen Bitcoin-Trends
+- Modell erhält Sequenzen historischer Feature-Werte, die den zeitlichen Verlauf des Marktes beschreiben
+- LSTM verarbeitet diese Werte Schritt für Schritt und speichert relevante Muster im internen Zustand
+- Ausgabe einer Klassifikation des Trends (steigend, fallend, neutral)
+
+Vorteile der Nutzung von LSTM:
+
+- Erkennung von Mustern über mehrere Stunden -> Erkennung von zeitlichen Abhängigkeiten
+- Speichert relevante Informationen im Verlauf
+
+*Trainingsablauf des LSTM-Modells*
+
+![Trainingsablauf](images/Trainingsablauf_LSTM.png)
+
+- Sequenzen im Dataset definieren: Aus den Zeitreihendaten werden überlappende Fenster erzeugt, die als Input-Sequenzen für das Modell dienen.
+- DataLoader mit Batches erstellen: Die Sequenzen werden zu Batches zusammengefasst, damit das Modell in jedem Schritt mehrere Beispiele parallel verarbeiten kann.
+- Modell, Loss, Optimizer: Initialisierung des LSTM-Modells, Auswahl der Fehlerfunktion und Konfiguration des Optimizers zur Gewichtsaktualisierung.
+
+Epoch Loop: Wiederholt Training und Validierung über mehrere Durchläufe, bis die Epochezahl erreicht ist.
+
+Batch Loop (Training)
+- Forward: Das LSTM verarbeitet die Sequenz und erzeugt eine Klassifikationsvorhersage für den Trend am letzten Zeitschritt.
+- Loss: Die Vorhersage wird mit den echten Labels verglichen, um den Fehler des Modells zu berechnen.
+- Backward: Per Backpropagation werden die Gradienten berechnet, die zeigen, wie stark jedes Gewicht zum Fehler beigetragen hat.
+- Update: Der Optimizer passt die Modellgewichte basierend auf den Gradienten an.
+
+Batch Loop (Validation)
+- Forward: Die Validierungsdaten werden einmal durch das Modell geleitet, ohne die Gewichte zu verändern.
+- Loss: Berechnung des Validierungsfehlers, um die Generalisierungsfähigkeit des Modells zu beurteilen.
+- Metrics: Berechnung von Qualitätskennzahlen wie Accuracy, Recall oder F1-Score, um die Modellleistung zu vergleichen.
+
+
+
+
+
+
 
 
