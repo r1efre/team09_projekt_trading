@@ -12,9 +12,11 @@ validation_date = params['SPLIT_DATA']['VALIDATION_DATE']
 
 # Split into train, validation, and test sets and save the processed data to Parquet files
 train = data[data['timestamp'] < train_date]
+train = train.iloc[:-1]
 train.to_parquet(f"{processed_path}/train.parquet", index=False)
 
 validation = data[(data['timestamp'] >= train_date) & (data['timestamp'] < validation_date)]
+validation = validation.iloc[:-1]
 validation.to_parquet(f"{processed_path}/validation.parquet", index=False)
 
 test = data[(data['timestamp'] >= validation_date)]

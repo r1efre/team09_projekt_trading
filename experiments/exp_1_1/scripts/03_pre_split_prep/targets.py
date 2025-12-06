@@ -12,11 +12,11 @@ def classify_trend(row, vol_factor):
     threshold = vol_factor * vol
 
     if r > threshold:
-        return 1       # UP
+        return 2       # UP
     elif r < -threshold:
-        return -1      # DOWN
+        return 0      # DOWN
     else:
-        return 0       # Neutral
+        return 1      # Neutral
 
 
 

@@ -12,7 +12,7 @@ data = pd.read_parquet(f'{processed_path}/dataComplete.parquet')
 #Trend-Verteilung alle 2 Monate
 
 # Trend text labels
-label_map = {-1: "DOWN", 0: "NEUTRAL", 1: "UP"}
+label_map = {0: "DOWN", 1: "NEUTRAL", 2: "UP"}
 data["trend_label"] = data["trend"].map(label_map)
 
 # 2-Monats-Periode erzeugen

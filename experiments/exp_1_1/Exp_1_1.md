@@ -300,6 +300,10 @@ Die Daten werden aufgeteilt in:
 - Validierungsdaten (ca. 20% der Daten) - 2024-05-20 bis 2025-05-07
 - Testdaten (ca. 10% der Daten) - 2025-05-08 bis 2025-10-31
 
+Weiterhin wurde die letzte Zeile aus dem Trainingsdatensatz entfernt, da zur Berechnung der Target Variablen der letzten Zeile t
+Informationen aus der Datenzeile t + 1 miteingeflossen sind. Diese Datenzeile befindet sich jedoch im Validierungsdatensatz -> Data Leakage
+Aus dem gleichen Grund wurde auch die letzte Zeile des Validierungsdatensatzes entfernt.
+
 ---
 
 ## Step 5 - Post-Split Preparation
