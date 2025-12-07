@@ -366,6 +366,16 @@ Vorteile der Nutzung von LSTM:
 - Erkennung von Mustern über mehrere Stunden -> Erkennung von zeitlichen Abhängigkeiten
 - Speichert relevante Informationen im Verlauf
 
+*Modellarchitektur*
+![Modellarchitektur](images/Modellarchitektur.png)
+
+- Cell: in jedem Schritt einer Sequenz erhalten wir Features, den Zustand des Langzeitgedächtnisses (c) und den Zustand des Kurzzeitgedächtnisses (h), c und h werden an den nächsten Schritt weitergegeben.
+- Input Sequence: die Sequenz aus 6 Schritten (6 Stunden) wird in den Input der LSTM-Schicht eingegeben, wobei jede Zelle einen Vektor aus 13 Merkmalen x zum Zeitpunkt t darstellt. In die LSTM-Schicht werden 64 Sequenzen (batch size) mit einer Größe von jeweils 6 Stunden eingegeben, wobei jede Stunde 13 Features überträgt.
+- LSTM-Layer: das Modell enthält eine LSTM-Schicht. Diese verarbeitet nacheinander sechs Zeitschritte. Bei jedem Schritt aktualisiert die LSTM den versteckten Zustand h und den Zellzustand c. Nach Durchlaufen der gesamten Sequenz wird der letzte versteckte Zustand h6 genommen – dies ist ein Vektor, der 16 Neuronen (hidden size) enthält.
+- Dense(3): das final hidden state h6 wird an eine lineare Layer weitergeleitet, die aus drei unabhängigen linearen Ausgängen besteht (up, down, neutral). Jeder Ausgang wird berechnet: z=W*h6 +b, wo W — Gewichtsmatrix 3*16, die bestimmt, wie jedes Neuron aus dem Vektor h6 die Wahrscheinlichkeit jeder der drei Klassen beeinflusst.
+
+Hinweis: Für unser Modell haben wir die Softmax-Funktion nicht als zusätzliche Layer hinzugefügt, da wir für das Training die CrossEntropyLoss-Funktion verwenden. In PyTorch ist die Softmax-Funktion bereits in CrossEntropyLoss enthalten, das rohe Logits erwartet.
+
 *Trainingsablauf des LSTM-Modells*
 
 ![Trainingsablauf](images/Trainingsablauf_LSTM.png)
