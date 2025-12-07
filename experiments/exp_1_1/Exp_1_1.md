@@ -562,15 +562,21 @@ Im Testing wird ein neues Modell mit identischer Architektur erzeugt und die wä
 
 | Merkmal      | Test   |
 |--------------|--------|
-| Accuracy     | 0.3881 |
-| F1-macro     | 0.2941 |
-| Recall-macro | 0.3580 |
- | Loss         | 1.0938 |
+| Accuracy     | 0.3952 |
+| F1-macro     | 0.2863 |
+| Recall-macro | 0.3651 |
+ | Loss         | 1.0907 |
 
-Das getestete LSTM-Modell erreicht auf den zuvor ungesehenen Testdaten eine Accuracy von 0.388 sowie einen Recall-macro von 0.3580 und liegt damit nur leicht über dem zufälligen Erwartungsniveau.
+Das getestete LSTM-Modell erreicht auf den zuvor ungesehenen Testdaten eine Accuracy von 0.3952 sowie einen Recall-macro von 0.3651 und liegt damit nur leicht über dem zufälligen Erwartungsniveau.
 Die Werte zeigen, dass das Modell nur eine eingeschränkte Generalisierungsfähigkeit besitzt.
-Der Loss-Wert des Modells liegt über dem erwarteten Basiswert eines zufälligen Klassifikators (Shannon-Entropie).
+Der Loss-Wert des Modells liegt ungefähr bei dem erwarteten Basiswert eines zufälligen Klassifikators (Shannon-Entropie ≈ 1.09).
 Daraus lässt sich schließen, dass das Modell den Bitcoin-Trend in der nächsten Stunde nicht zuverlässiger vorhersagen kann als eine zufällige Klassenzuordnung auf Basis der Klassenverteilung.
+
+![LSTM Testing](images/08_lstm_testing.png)
+
+Die Konfusionsmatrix zeigt, dass das LSTM-Modell nahezu alle Eingaben als „NEUTRAL“ klassifiziert, unabhängig vom tatsächlichen Trendverlauf.
+Dadurch werden „DOWN“ und „UP“ nur sehr selten korrekt erkannt, während „NEUTRAL“ in vielen Fällen richtig vorhergesagt wird.
+Dieses Ergebnis deutet darauf hin, dass das Modell nicht die relevanten zeitlichen Muster für Trendwechsel gelernt hat, sondern sich stark auf die dominante Klassenverteilung im Datensatz stützt.
 
 ### Testing Random Forest
 
@@ -578,9 +584,13 @@ Zum Vergleich des LSTM-Modells wird auch das Random Forest Modell getestet.
 
 | Merkmal      | Random Forest | LSTM  |
 |--------------|---------------|-------|
-| Accuracy     | 0.326         | 0.3881 |
-| F1-macro     | 0.273         | 0.2941 |
-| Recall-macro | 0.344         | 0.3580 |
+| Accuracy     | 0.326         | 0.3952 |
+| F1-macro     | 0.273         | 0.2863 |
+| Recall-macro | 0.344         | 0.3651 |
+
+Der Vergleich zeigt, dass das LSTM-Modell in allen Metriken leicht bessere Werte erzielt als der Random Forest und damit besser in der Lage ist, Muster in den Zeitreihendaten zu erkennen.
+Die Unterschiede zwischen beiden Modellen sind jedoch nur gering, was darauf hindeutet, dass beide Ansätze Schwierigkeiten haben, den Bitcoin-Trend zuverlässig vorherzusagen.
+Insgesamt liegen beide Modelle nur knapp über einer zufälligen Vorhersage, sodass die aktuelle Feature-Basis und Modellierung die zugrunde liegende Marktstruktur nicht ausreichend erfassen.
 
 ![Random Forest Testing](images/08_randomForest_testing.png)
 

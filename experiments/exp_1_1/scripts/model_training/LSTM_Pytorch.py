@@ -6,7 +6,7 @@ import pandas as pd
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score, f1_score, recall_score
-from .BTCSequenceDataset import BTCSequenceDataset
+from BTCSequenceDataset import BTCSequenceDataset
 
 
 class Net(nn.Module):
