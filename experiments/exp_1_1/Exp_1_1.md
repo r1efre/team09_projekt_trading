@@ -489,16 +489,16 @@ Der Recall-macro von 0.377 zeigt zwar, dass das Modell einen Teil der tatsächli
 
 ### Baseline-Modell - Random Forest
 
-Als Baseline-Modell wurde das Random-Forest-Modell ausgewählt. Unsere Aufgabe ist es, sicherzustellen, dass das LSTM-Modell besser funktioniert als das Random-Forest-Modell.
+Als Baseline-Modell wurde das Random-Forest-Modell ausgewählt. Wir wollen nun vergleichen, ob das LSTM-Modell besser funktioniert als das Random-Forest-Modell.
 
 Funktionsweise des Random-Forest-Modells
 1) Für jeden Baum wird zufällig eine Teilmenge der Trainingsdaten ausgewählt.
 2) Bei jeder Aufteilung eines Knotens wählt der Baum eine zufällige Teilmenge von Merkmalen aus.
-3) Jeder Baum wird so lange trainiert, bis keine weitere Verbesserung der Aufteilung mehr möglich ist .
+3) Jeder Baum wird so lange trainiert, bis keine weitere Verbesserung der Aufteilung mehr möglich ist.
 4) Für die Klassifizierung wählt Random Forest die endgültige Klasse wie folgt aus: class=max(Stimmen der Bäume)
 
 *Wichtig:* Das Random-Forest-Modell verwendet keine zeitliche Datenstruktur!
-Mit diesem Baseline-Modell können wir also deutlich sehen, ob diese Aufgabe ohne zeitliche Komponente gelöst werden kann oder ob das LSTM-Modell wichtig ist.
+Mit diesem Baseline-Modell können wir also deutlich sehen, ob diese Aufgabe ohne zeitliche Komponente gelöst werden kann oder on für diesen Anwendungsfall das LSTM-Modell besser funktioniert.
 
 #### Parameter für Baseline-Modell:
 
@@ -523,4 +523,20 @@ Wie aus der obigen Tabelle ersichtlich ist, weist das LSTM-Modell eine höhere G
 Allerdings ist der F1-Macro-Wert bei LSTM niedriger, was bedeutet, dass das Modell trotz seiner besseren Fähigkeit, Klassen zu finden, immer noch häufiger Fehler macht und sie mit anderen verwechselt.
 
 Obwohl der Unterschied zwischen Random Forest und LSTM relativ gering ist, hat er dennoch eine besondere Bedeutung. Random Forest berücksichtigt keine zeitliche Struktur, während LSTM speziell für die Modellierung von Sequenzen verwendet wird. Die etwas bessere Genauigkeit und das höhere Recall-Macro der LSTM-Modells zeigen, dass die zeitlichen Abhängigkeiten im Datensatz zwar schwach, aber insgesamt vorhanden sind.
+
+### Baseline-Modell - Shannon-Entropie
+
+Die Shannon-Entropie misst die Unsicherheit einer Klassenverteilung und gibt an, wie schwer es ist, die richtige Klasse zufällig zu erraten. 
+Je höher die Entropie, desto ausgewogener sind die Klassen und desto weniger Information enthält die Verteilung über die erwartete Klasse. 
+In diesem Projekt wird die Entropie als Baseline verwendet, um den Loss eines zufälligen Klassifikators unter Berücksichtigung der echten Klassenhäufigkeiten abzuschätzen. 
+Dadurch lässt sich bewerten, ob das trainierte Modell tatsächlich Muster gelernt hat oder nur auf dem zufälligen Erwartungsniveau liegt.
+
+Die Berechnung ergab eine Shannon-Entropie ≈ 1.09
+
+- ModelLoss < ShannonEntropy → Modell lernt Informationen
+- ModelLoss ≈ ShannonEntropy → Modell ist random
+
+Bei unserem besten Versuch beträgt der Validation Loss, der durch CrossEntropy-Loss ermittelt wurde, 1.0866. 
+Der Loss-Wert ist also nur minimal besser als das zufällige Loss. 
+
 

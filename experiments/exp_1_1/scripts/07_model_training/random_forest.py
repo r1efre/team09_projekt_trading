@@ -2,7 +2,6 @@ import pandas as pd
 from sklearn.metrics import accuracy_score, f1_score, recall_score
 from sklearn.ensemble import RandomForestClassifier
 import yaml
-from itertools import product
 
 #Daten laden
 params = yaml.safe_load(open("../../conf/params.yaml"))
