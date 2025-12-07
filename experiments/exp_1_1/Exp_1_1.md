@@ -1,5 +1,19 @@
 # Team 09 - Projekt Trading
 
+## 📚 Table of Contents
+
+- [Problem Definiton:](#problem-definiton)
+- [Step 1 - Data Acquisition](#step-1---data-acquisition)
+- [Step 2 - Data Understanding](#step-2---data-Understanding)
+- [Step 3 - Data Preparation (Pre-Split)](#step-3---data-preparation-pre-split)
+- [Step 4 - Split Data](#step-4---split-data)
+- [Step 5 - Post-Split Preparation](#step-5---post-split-preparation)
+- [Step 6 - Feature Selection](#step-6---feature-selection)
+- [Step 7 - Model Training](#step-7---model-training)
+- [Step 8 - Model Testing](#step-8---model-testing)
+
+---
+
 ### Problem Definiton:
 
 **Target**
