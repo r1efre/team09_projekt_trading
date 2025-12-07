@@ -351,6 +351,7 @@ Aufgrund der starken Korrelationen werden folgende Features aus dem Datensatz ge
 - [scripts/07_model_training/BTCSequenceDataset.py](scripts/07_model_training/BTCSequenceDataset.py)
 - [scripts/07_model_training/LSTM_Pytorch.py](scripts/07_model_training/LSTM_Pytorch.py)
 - [scripts/07_model_training/random_forest.py](scripts/07_model_training/random_forest.py)
+- [scripts/07_model_training/random_loss.py](scripts/07_model_training/random_loss.py)
 
 *Nutzung LSTM-Modell*
 
@@ -417,6 +418,74 @@ Batch Loop (Validation)
 | F1-macro                  | 0.205              | 0.178                       | 0.179                       | 0.286                       | 0.355            | 0.324            | 0.362            |
 | Recall-macro              | 0.334              | 0.333                       | 0.333                       | 0.333                       | 0.380            | 0.377            | 0.367            |
 
+
+Die Ergebnisse der sieben Modellvarianten zeigen, dass die Wahl der Parameter in diesem Experiment nur zu moderaten Abweichungen in der Modellqualität führt. 
+Die Loss-Werte bewegen sich über alle Versuche hinweg sehr nahe am Zufallsniveau, was darauf hindeutet, dass das Modell zwar erste Muster in den Daten erkennt, die Prognosekraft aber insgesamt noch gering ist. 
+Besonders deutlich wird dies in den Klassifikationsmetriken: Die Accuracy liegt bei allen Versuchen im Bereich von 32–40 %, während F1-Score und Recall nur begrenzt ansteigen und damit eine starke Klassenverzerrung zugunsten der dominanten Klasse vermuten lassen. 
+Insgesamt deuten die Ergebnisse darauf hin, dass Architekturänderungen am LSTM aktuell weniger Einfluss haben als die Datenbasis und das Feature-Design, sodass weitere Verbesserungen eher über das Feature Engineering zu erwarten sind.
+
+- Accuracy: misst den Anteil aller korrekt vorhergesagten Klassen im Verhältnis zu allen Vorhersagen
+- F1-Score (macro): misst die Balance zwischen Precision und Recall über alle Klassen und gewichtet alle Klassen gleich, unabhängig von ihrer Häufigkeit
+- Recall (macro): misst den Anteil korrekt erkannter tatsächlicher Klassen (True Positives) im Verhältnis zu allen echten Fällen, ebenfalls gleich gewichtet über alle Klassen -> wie gut wird jede Klasse erkannt
+
+Der Loss-Wert misst, wie gut das Modell die echten Zielwerte vorhersagt. 
+Ein niedriger Loss bedeutet, dass die Modellvorhersagen nah an den tatsächlichen Klassen liegen, während ein hoher Loss zeigt, dass das Modell noch weit von korrekten Vorhersagen entfernt ist.
+
+Ein zufälliger Klassifikator hätte bei dieser Klassenverteilung einen Loss von ca. 1.09. Dieser Wert dient als Baseline, um zu prüfen, ob das trainierte Modell besser als reiner Zufall vorhersagt.
+
+#### Darstellung ausgewählter Versuche
+
+*1.Versuch*
+
+![1.Versuch](images/07_ersterVersuch.png)
+
+- Erfolgreiche Konvergenz: Beide Loss-Kurven (Training und Validation) fallen stetig
+- Kein Overfitting: Die Validation Loss bleibt durchgehend leicht über der Training Loss und folgt dem gleichen Trend, was auf gute Generalisierung hindeutet
+- Validation Loss schlechter als zufälliger Klassifikator 
+
+*3.Versuch*
+
+![3.Versuch](images/07_dritterVersuch.png)
+
+- Schnelle initiale Konvergenz: Beide Loss-Kurven fallen in den ersten 20-30 Epochen steil ab, danach verlangsamt sich die Verbesserung deutlich
+- Tieferes Modell mit mehr Layern und einer größeren hidden_size sowie eine größere Sequenzlänge, verbessert die Modellqualität nicht
+- Loss-Werte und andere Metriken minimal schlechter als im ersten Versuch und schlechter als zufälliger Klassifikator
+
+*4.Versuch*
+
+![4.Versuch](images/07_vierterVersuch.png)
+
+- Kontinuierliche Konvergenz: Beide Loss-Kurven fallen stetig über alle Epochen, wobei die Training Loss schneller sinkt als die Validation Loss
+- Schlechtere Generalisierung: Mit einer Validation Loss deutlich über der baseline (~1.09) generalisiert dieses Modell schlechter als das vorherige und lernt primär trainingsspezifische Muster
+- Einführung eines Dropouts zeigt keine Verbesserung der Modellqualität, wenn man weiterhin zwei Layer und eine hidden_size von 16 verwendet
+
+*6.Versuch*
+
+![6.Versuch](images/07_sechsterVersuch.png)
+
+- Verzögerter Validierungs-Start: Die Validation Loss stagniert in den ersten ~15 Epochen bei ~1.094, während die Training Loss bereits deutlich fällt – das Modell lernt zunächst nur trainingsspezifische Muster
+- Späte aber kontinuierliche Verbesserung: Ab Epoch 15 sinkt die Validation Loss stetig auf ~1.087 und zeigt damit durchgehende Verbesserung der Generalisierung über alle Epochen
+- Beste Performance aller Modelle: Mit finaler Validation Loss von ~1.0866 (unter der baseline) und weiterhin sinkender Training Loss (~1.0702) zeigt dieses Modell die beste Balance zwischen Lernfortschritt und Generalisierung
+- Vergrößern der Lernrate auf 0.001 von 0.00001 und das Verwenden von zwei Layern und einer hidden_size von 16 führt zu einem minimal besseren Ergebnis
+
+*7.Versuch*
+
+![7.Versuch](images/07_siebterVersuch.png)
+
+- Starkes Overfitting: Die Training Loss sinkt kontinuierlich auf ~1.033, während die Validation Loss sogar ansteigt – ein extremes Auswendiglernen der Trainingsdaten
+- Keine Generalisierung: Die Validation Loss liegt durchgehend deutlich über der baseline (~1.09) und zeigt keine Verbesserung, das Modell lernt keine verallgemeinerbaren Muster
+- Der Optimierungsalgorithmus Adam zeigt eine deutliche Verschlechterung zum bisher verwendeten SGD-Optimizer
+
+#### Ausgewählter Versuch
+
+Der Vergleich der Modellvarianten zeigt, dass die Konfiguration aus dem sechsten Versuch insgesamt die besten Ergebnisse erzielt, weshalb wir für das Modell Testing, mit diesem Modell fortfahren werden.
+Das Modell mit nur zwei LSTM-Layern und einer hidden_size von 16 erzielte in den Versuchen insgesamt bessere Ergebnisse als tiefere Architekturen mit größeren hidden_sizes.
+Die Experimente zeigen außerdem, dass eine kürzere Sequenzlänge von 6 Stunden deutlich bessere Ergebnisse liefert als längere Sequenzen wie 24 Stunden. 
+Ein möglicher Grund dafür ist, dass kurzfristige Trendmuster im Bitcoin-Kurs meist nur über wenige Stunden hinweg stabil sind, während längere Zeitfenster verstärkt zufällige Schwankungen enthalten und dadurch das Modell mit Rauschen statt relevanten Signalen konfrontieren.
+
+Trotz dieser Verbesserung liegt der Loss des Modells aus Versuch 6 nur geringfügig unter dem Wert eines zufälligen Klassifikators.
+Im sechsten Versuch erreicht das Modell eine Accuracy von 0.397, was auf den ersten Blick solide erscheint, allerdings spiegelt die deutlich niedrigere F1-macro von 0.324 wider, dass die Klassen unausgewogen vorhergesagt werden. 
+Der Recall-macro von 0.377 zeigt zwar, dass das Modell einen Teil der tatsächlichen Trendbewegungen korrekt erkennt, insgesamt liegt die Leistung aber nur knapp über dem Zufallsniveau und deutet auf begrenzte Generalisierungsfähigkeit hin.
 
 
 
