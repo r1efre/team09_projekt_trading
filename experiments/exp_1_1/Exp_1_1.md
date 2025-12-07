@@ -371,7 +371,7 @@ Vorteile der Nutzung von LSTM:
 ![Trainingsablauf](images/Trainingsablauf_LSTM.png)
 
 - Sequenzen im Dataset definieren: Aus den Zeitreihendaten werden überlappende Fenster erzeugt, die als Input-Sequenzen für das Modell dienen.
-- DataLoader mit Batches erstellen: Die Sequenzen werden zu Batches zusammengefasst, damit das Modell in jedem Schritt mehrere Beispiele parallel verarbeiten kann.
+- DataLoader mit Batches erstellen: Die Sequenzen werden zu Batches zusammengefasst, damit das Modell in jedem Schritt mehrere Beispiele parallel verarbeiten kann. Für das Training werden die Sequenzen geshuffelt.
 - Modell, Loss, Optimizer: Initialisierung des LSTM-Modells, Auswahl der Fehlerfunktion und Konfiguration des Optimizers zur Gewichtsaktualisierung.
 
 Epoch Loop: Wiederholt Training und Validierung über mehrere Durchläufe, bis die Epochezahl erreicht ist.
@@ -386,6 +386,26 @@ Batch Loop (Validation)
 - Forward: Die Validierungsdaten werden einmal durch das Modell geleitet, ohne die Gewichte zu verändern.
 - Loss: Berechnung des Validierungsfehlers, um die Generalisierungsfähigkeit des Modells zu beurteilen.
 - Metrics: Berechnung von Qualitätskennzahlen wie Accuracy, Recall oder F1-Score, um die Modellleistung zu vergleichen.
+
+### Benutzte Parameter
+
+| Parameter                 | Versuch 1          | Versuch 2                   | Versuch 3                   | Versuch 4                   | Versuch 5        | Versuch 6        | Versuch 7        | 
+|---------------------------|--------------------|-----------------------------|-----------------------------|-----------------------------|------------------|------------------|------------------|
+| Anzahl der Layer          | 2                  | 3                           | 3                           | 2                           | 2                | 2                | 2                | 
+| hidden_size               | 16                 | 32, 16                      | 32, 16                      | 16                          | 16               | 16               | 16               | 
+| Optimierungsalgorithmus   | SGD-Optimizer      | SGD-Optimizer               | SGD-Optimizer               | SGD-Optimizer               | SGD-Optimizer    | SGD-Optimizer    | Adam             | 
+| LOSS Funktion             | CrossEntropyLoss   | CrossEntropyLoss            | CrossEntropyLoss            | CrossEntropyLoss            | CrossEntropyLoss | CrossEntropyLoss | CrossEntropyLoss | 
+| Sequence size             | 6                  | 6                           | 24                          | 6                           | 6                | 6                | 6                | 
+| Batch size                | 64                 | 64                          | 32                          | 64                          | 64               | 64               | 64               | 
+| Dropout                   | kein               | vor dem letzten Layer (0.2) | vor dem letzten Layer (0.2) | vor dem letzten Layer (0.2) | kein             | kein             | kein             | 
+| Learning Rate             | 0.00001            | 0.00001                     | 0.00001                     | 0.00001                     | 0.01             | 0.001            | 0.001            | 
+| Aktivierungsfunktion      | keine              | keine                       | keine                       | keine                       | keine            | keine            | keine            | 
+| ------------------------- | ------------------ | ---------------             | ---------------             | ---------------             | --------------   | ---------------  | ---------------  | 
+| Train Loss                | 1.0866             | 1.0879                      | 1.0867                      | 1.0898                      | 1.0498           | 1.0702           | 1.0324           | 
+| Val Loss                  | 1.0966             | 1.0967                      | 1.0969                      | 1.1066                      | 1.0934           | 1.0866           | 1.1159           | 
+| Accuracy                  | 0.363              | 0.365                       | 0.366                       | 0.323                       | 0.396            | 0.397            | 0.363            | 
+| F1-macro                  | 0.205              | 0.178                       | 0.179                       | 0.286                       | 0.355            | 0.324            | 0.362            |
+| Recall-macro              | 0.334              | 0.333                       | 0.333                       | 0.333                       | 0.380            | 0.377            | 0.367            |
 
 
 

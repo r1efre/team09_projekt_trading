@@ -67,7 +67,7 @@ val_loader = DataLoader(
 net = Net(input_size)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=0.00001, momentum=0.9)
+optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
 trainLoss_vals = []
 ValLoss_vals = []
@@ -75,7 +75,7 @@ val_acc_vals = []
 val_f1_vals = []
 val_recall_vals = []
 
-num_epochs = 200
+num_epochs = 70
 for epoch in range(num_epochs):
     # Training
     net.train()
