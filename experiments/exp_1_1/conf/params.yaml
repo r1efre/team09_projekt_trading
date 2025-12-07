@@ -15,7 +15,7 @@ SPLIT_DATA:
   TRAIN_DATE: '2024-05-20'
   VALIDATION_DATE: '2025-05-08'
 POST_SPLIT:
-  SCALED_PATH: 'C:/5.Semester/Unternehmenssoftware/data/scaled'
+  SCALED_PATH: '/Users/rita/Desktop/Uni Bachelor/3.1/Unternehmenssoftware/data/scaled'
 MODELING:
   SEQUENCE: 6
   INPUT_SIZE: 13
