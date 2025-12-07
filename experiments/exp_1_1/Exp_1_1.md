@@ -573,3 +573,16 @@ Der Loss-Wert des Modells liegt über dem erwarteten Basiswert eines zufälligen
 Daraus lässt sich schließen, dass das Modell den Bitcoin-Trend in der nächsten Stunde nicht zuverlässiger vorhersagen kann als eine zufällige Klassenzuordnung auf Basis der Klassenverteilung.
 
 ### Testing Random Forest
+
+Zum Vergleich des LSTM-Modells wird auch das Random Forest Modell getestet.
+
+| Merkmal      | Random Forest | LSTM  |
+|--------------|---------------|-------|
+| Accuracy     | 0.326         | 0.3881 |
+| F1-macro     | 0.273         | 0.2941 |
+| Recall-macro | 0.344         | 0.3580 |
+
+![Random Forest Testing](images/08_randomForest_testing.png)
+
+Die Confusion Matrix zeigt, dass der Random Forest nahezu alle Klassen als „DOWN“ vorhersagt. 
+Während tatsächliche „DOWN“-Trends noch relativ häufig korrekt erkannt werden, werden die Klassen „NEUTRAL“ und „UP“ fast vollständig fälschlich als „DOWN“ klassifiziert.
