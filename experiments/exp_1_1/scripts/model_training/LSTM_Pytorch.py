@@ -6,7 +6,7 @@ import pandas as pd
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score, f1_score, recall_score
-from BTCSequenceDataset import BTCSequenceDataset
+from .BTCSequenceDataset import BTCSequenceDataset
 
 
 class Net(nn.Module):
@@ -30,6 +30,7 @@ class Net(nn.Module):
 #Daten laden
 params = yaml.safe_load(open("../../conf/params.yaml"))
 scaled_path = params['POST_SPLIT']['SCALED_PATH']
+model_path = params['MODELING']['SAVE_MODEL']
 
 x_train = pd.read_parquet(f'{scaled_path}/x_train_scaled.parquet')
 y_train = pd.read_parquet(f'{scaled_path}/y_train.parquet')
@@ -76,6 +77,7 @@ val_f1_vals = []
 val_recall_vals = []
 
 num_epochs = 70
+best_val_loss = 2
 for epoch in range(num_epochs):
     # Training
     net.train()
@@ -112,6 +114,9 @@ for epoch in range(num_epochs):
 
     val_loss = runVal_loss / len(val_loader)
     ValLoss_vals.append(val_loss)
+    if val_loss < best_val_loss:
+        best_val_loss = val_loss
+        torch.save(net.state_dict(), f"{model_path}/best_model.pt")
     print(f"Epoch {epoch + 1}: Train Loss = {train_loss:.4f}, Val Loss = {val_loss:.4f}")
 
     # alles zu einem Vektor zusammenfügen

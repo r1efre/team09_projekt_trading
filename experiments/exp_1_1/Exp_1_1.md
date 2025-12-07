@@ -348,10 +348,10 @@ Aufgrund der starken Korrelationen werden folgende Features aus dem Datensatz ge
 
 **Script**
 
-- [scripts/07_model_training/BTCSequenceDataset.py](scripts/07_model_training/BTCSequenceDataset.py)
-- [scripts/07_model_training/LSTM_Pytorch.py](scripts/07_model_training/LSTM_Pytorch.py)
-- [scripts/07_model_training/random_forest.py](scripts/07_model_training/random_forest.py)
-- [scripts/07_model_training/random_loss.py](scripts/07_model_training/random_loss.py)
+- [scripts/model_training/BTCSequenceDataset.py](scripts/model_training/BTCSequenceDataset.py)
+- [scripts/model_training/LSTM_Pytorch.py](scripts/model_training/LSTM_Pytorch.py)
+- [scripts/model_training/random_forest.py](scripts/model_training/random_forest.py)
+- [scripts/model_training/random_loss.py](scripts/model_training/random_loss.py)
 
 *Nutzung LSTM-Modell*
 
@@ -539,4 +539,37 @@ Die Berechnung ergab eine Shannon-Entropie ≈ 1.09
 Bei unserem besten Versuch beträgt der Validation Loss, der durch CrossEntropy-Loss ermittelt wurde, 1.0866. 
 Der Loss-Wert ist also nur minimal besser als das zufällige Loss. 
 
+---
 
+## Step 8 - Model Testing
+
+**Script**
+
+- [scripts/08_model_testing/BTCSequenceDataset.py](scripts/08_model_testing/lstm_testing.py)
+- [scripts/08_model_testing/LSTM_Pytorch.py](scripts/08_model_testing/random_forest_testing.py)
+
+### Testing LSTM-Modell
+
+Ziel des Testings ist es, die tatsächliche Generalisierungsfähigkeit des Modells auf bisher ungesehenen Daten zu überprüfen und zu bewerten, ob das Modell über das zufällige Erwartungsniveau hinaus sinnvolle Muster aus der Bitcoin-Trendhistorie gelernt hat.
+
+Während des Trainings wird nach jeder Epoche der Validierungs-Loss berechnet und mit dem bisher besten Wert verglichen.
+Sobald das Modell eine bessere Validierungsleistung erreicht, werden die aktuellen Modellgewichte gespeichert.
+Auf diese Weise wird immer das Modell gesichert, das am besten generalisiert und nicht das Modell aus der letzten Trainingsepoche.
+Beim Testing wird genau dieses „Best-Model“ geladen, um eine faire und objektive Bewertung auf den zuvor ungesehenen Testdaten zu ermöglichen.
+Im Testing wird ein neues Modell mit identischer Architektur erzeugt und die während des Trainings ermittelten besten Modellgewichte geladen und für die Vorhersage auf den Testdaten verwendet.
+
+**Ergebnisse**
+
+| Merkmal      | Test   |
+|--------------|--------|
+| Accuracy     | 0.3881 |
+| F1-macro     | 0.2941 |
+| Recall-macro | 0.3580 |
+ | Loss         | 1.0938 |
+
+Das getestete LSTM-Modell erreicht auf den zuvor ungesehenen Testdaten eine Accuracy von 0.388 sowie einen Recall-macro von 0.3580 und liegt damit nur leicht über dem zufälligen Erwartungsniveau.
+Die Werte zeigen, dass das Modell nur eine eingeschränkte Generalisierungsfähigkeit besitzt.
+Der Loss-Wert des Modells liegt über dem erwarteten Basiswert eines zufälligen Klassifikators (Shannon-Entropie).
+Daraus lässt sich schließen, dass das Modell den Bitcoin-Trend in der nächsten Stunde nicht zuverlässiger vorhersagen kann als eine zufällige Klassenzuordnung auf Basis der Klassenverteilung.
+
+### Testing Random Forest
