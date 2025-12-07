@@ -487,9 +487,40 @@ Trotz dieser Verbesserung liegt der Loss des Modells aus Versuch 6 nur geringfü
 Im sechsten Versuch erreicht das Modell eine Accuracy von 0.397, was auf den ersten Blick solide erscheint, allerdings spiegelt die deutlich niedrigere F1-macro von 0.324 wider, dass die Klassen unausgewogen vorhergesagt werden. 
 Der Recall-macro von 0.377 zeigt zwar, dass das Modell einen Teil der tatsächlichen Trendbewegungen korrekt erkennt, insgesamt liegt die Leistung aber nur knapp über dem Zufallsniveau und deutet auf begrenzte Generalisierungsfähigkeit hin.
 
+### Baseline-Modell - Random Forest
 
+Als Baseline-Modell wurde das Random-Forest-Modell ausgewählt. Unsere Aufgabe ist es, sicherzustellen, dass das LSTM-Modell besser funktioniert als das Random-Forest-Modell.
 
+Funktionsweise des Random-Forest-Modells
+1) Für jeden Baum wird zufällig eine Teilmenge der Trainingsdaten ausgewählt.
+2) Bei jeder Aufteilung eines Knotens wählt der Baum eine zufällige Teilmenge von Merkmalen aus.
+3) Jeder Baum wird so lange trainiert, bis keine weitere Verbesserung der Aufteilung mehr möglich ist .
+4) Für die Klassifizierung wählt Random Forest die endgültige Klasse wie folgt aus: class=max(Stimmen der Bäume)
 
+*Wichtig:* Das Random-Forest-Modell verwendet keine zeitliche Datenstruktur!
+Mit diesem Baseline-Modell können wir also deutlich sehen, ob diese Aufgabe ohne zeitliche Komponente gelöst werden kann oder ob das LSTM-Modell wichtig ist.
 
+#### Parameter für Baseline-Modell:
 
+Für unser Random-Forest-Modell haben wir die Parameter ausgewählt, bei denen das Modell die höchste Genauigkeit erreicht.
+
+| Parameter           | Bedeutung                                   |
+|---------------------|---------------------------------------------|
+| n_estimators=200    | Mehr Bäume —> stabileres Modell             |
+| max_depth=None      | Das Modell kann komplexe Trennungen lernen. |
+| min_samples_split=5 | Leichte Regulierung —> weniger Umschulung   |
+| min_samples_leaf=2  | Reduziert Rauschen                          |
+
+Als Ergebnis haben wir folgende Werte erhalten:
+
+| Merkmal      | Random Forest | LSTM  |
+|--------------| ------------- |-------|
+| Accuracy     | 0.355         | 0.397 |
+| F1-macro     | 0.351         | 0.324 |
+| Recall-macro | 0.360         | 0.377 |
+
+Wie aus der obigen Tabelle ersichtlich ist, weist das LSTM-Modell eine höhere Genauigkeit sowie einen höheren Recall-Macro auf. Das bedeutet, dass es einen etwas größeren Anteil der Objekte korrekt vorhergesagt hat als Random Forest und auch seltene Klassen besser erkennt. 
+Allerdings ist der F1-Macro-Wert bei LSTM niedriger, was bedeutet, dass das Modell trotz seiner besseren Fähigkeit, Klassen zu finden, immer noch häufiger Fehler macht und sie mit anderen verwechselt.
+
+Obwohl der Unterschied zwischen Random Forest und LSTM relativ gering ist, hat er dennoch eine besondere Bedeutung. Random Forest berücksichtigt keine zeitliche Struktur, während LSTM speziell für die Modellierung von Sequenzen verwendet wird. Die etwas bessere Genauigkeit und das höhere Recall-Macro der LSTM-Modells zeigen, dass die zeitlichen Abhängigkeiten im Datensatz zwar schwach, aber insgesamt vorhanden sind.
 
