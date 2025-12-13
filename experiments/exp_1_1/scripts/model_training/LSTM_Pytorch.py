@@ -82,7 +82,7 @@ for epoch in range(num_epochs):
     # Training
     net.train()
     running_loss = 0.0
-    for inputs, labels in train_loader:
+    for inputs, labels, _ in train_loader:
         optimizer.zero_grad()
 
         outputs = net(inputs)
@@ -101,7 +101,7 @@ for epoch in range(num_epochs):
     all_targets = []
 
     with torch.no_grad():
-        for inputs, labels in val_loader:
+        for inputs, labels, _ in val_loader:
             outputs = net(inputs)
             loss = criterion(outputs, labels)
             runVal_loss += loss.item()

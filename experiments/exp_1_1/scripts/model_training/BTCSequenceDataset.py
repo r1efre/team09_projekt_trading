@@ -6,6 +6,7 @@ class BTCSequenceDataset(Dataset):
         self.seq_size = seq_size
         self.features = x.values
         self.targets = y.values.reshape(-1)
+        self.index = x.index
 
     # Wie viele Sequenzen können aus den Daten gebaut werden
     def __len__(self):
@@ -17,7 +18,9 @@ class BTCSequenceDataset(Dataset):
         #Vorhersage target für letzten Datensatz im Fenster
         y_value = self.targets[idx + self.seq_size -1]
 
+        row_index = self.index[idx + self.seq_size - 1]
+
         x_tensor = torch.tensor(x_window, dtype=torch.float32)
         y_tensor = torch.tensor(y_value, dtype=torch.long)
 
-        return x_tensor, y_tensor
+        return x_tensor, y_tensor, row_index

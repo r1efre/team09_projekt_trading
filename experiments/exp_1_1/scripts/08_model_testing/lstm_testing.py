@@ -62,7 +62,7 @@ all_preds = []
 all_targets = []
 
 with torch.no_grad():
-    for inputs, labels in test_loader:
+    for inputs, labels, _ in test_loader:
         outputs = net_test(inputs)
         loss = criterion(outputs, labels)
         runTest_loss += loss.item()
