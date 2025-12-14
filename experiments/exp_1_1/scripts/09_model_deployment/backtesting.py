@@ -327,7 +327,7 @@ plt.grid(True)
 plt.legend()
 
 plt.tight_layout()
-plt.savefig("../../images/09_price+actions.png")
+plt.savefig("../../images/09_price_actions.png")
 plt.close()
 
 
