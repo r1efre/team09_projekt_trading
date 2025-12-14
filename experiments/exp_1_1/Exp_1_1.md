@@ -596,11 +596,11 @@ Dieses Ergebnis deutet darauf hin, dass das Modell nicht die relevanten zeitlich
 
 Zum Vergleich des LSTM-Modells wird auch das Random Forest Modell getestet.
 
-| Merkmal      | Random Forest | LSTM  |
-|--------------|---------------|-------|
-| Accuracy     | 0.326         | 0.3952 |
-| F1-macro     | 0.273         | 0.2863 |
-| Recall-macro | 0.344         | 0.3651 |
+| Merkmal      | Random Forest | LSTM    |
+|--------------|---------------|---------|
+| Accuracy     | 0.326         | 0.3952  |
+| F1-macro     | 0.273         | 0.2863  |
+| Recall-macro | 0.344         | 0.3651  |
 
 Der Vergleich zeigt, dass das LSTM-Modell in allen Metriken leicht bessere Werte erzielt als der Random Forest und damit besser in der Lage ist, Muster in den Zeitreihendaten zu erkennen.
 Die Unterschiede zwischen beiden Modellen sind jedoch nur gering, was darauf hindeutet, dass beide Ansätze Schwierigkeiten haben, den Bitcoin-Trend zuverlässig vorherzusagen.
@@ -610,3 +610,59 @@ Insgesamt liegen beide Modelle nur knapp über einer zufälligen Vorhersage, sod
 
 Die Confusion Matrix zeigt, dass der Random Forest nahezu alle Klassen als „DOWN“ vorhersagt. 
 Während tatsächliche „DOWN“-Trends noch relativ häufig korrekt erkannt werden, werden die Klassen „NEUTRAL“ und „UP“ fast vollständig fälschlich als „DOWN“ klassifiziert.
+
+
+## Step 9 - Deployment
+
+### Backtesting traidng algorithms
+
+**Script**
+
+[scripts/09_model_deployment/backtesting.py](scripts/09_model_deployment/backtesting.py)
+
+Das Backtesting wurde durchgeführt, indem das trainierte LSTM-Modell auf historische Testdaten angewendet wurde. Die Modellvorhersagen wurden in Handelssignale umgewandelt, und eine regelbasierte Handelsstrategie wurde über einen bestimmten Zeitraum simuliert. Das Portfolio-Eigenkapital wurde in jedem Zeitschritt verfolgt, um die historische Performance zu bewerten.
+
+### Entry and Exit Points
+
+*Entry Point*
+
+Bedingungen:
+- predicted class = UP
+- prob_up - prob_down >= 0.5
+- entweder keine Position vorhanden oder Position bereits auf dem Markt
+
+Entry Preis: Schlusskurs der aktuellen Stunde
+
+Entry Size: 
+- erster Einstieg = 10% des Eigenkapitals
+- nachfolgende Einstiege = 5% des Eigenkapitals
+
+*Exit Point*
+
+Bedingungen:
+- predicted class = DOWN
+- prob_down - prob_up >= 0.5
+- Position vorhanden und auf dem Markt
+
+Exit Preis: Schlusskurs der aktuellen Stunde
+
+Exit Volumen: 100% der Position
+
+### Trading Algorithm
+
+![Trading Algorithm](images/Algorithmus_Prozessbild.png)
+
+Der Handelsalgorithmus basiert auf den probabilistischen Vorhersagen eines trainierten LSTM-Modells. Für jeden Zeitschritt werden historische Marktdaten in Sequenzen umgewandelt und dem Modell zugeführt, welches Wahrscheinlichkeiten für drei Klassen ausgibt: DOWN, NEUTRAL und UP. Das Handelssignal wird durch die Klasse mit der höchsten Wahrscheinlichkeit bestimmt. Zusätzlich wird ein Konfidenzfilter angewendet, der nur Signale berücksichtigt, bei denen die absolute Differenz zwischen den Wahrscheinlichkeiten für UP und DOWN mindestens 5 % beträgt.
+Ein Order* wird nur dann ausgelöst, wenn ein ausreichendes UP- oder DOWN-Signal vorliegt. Bei einem bestätigten UP-Signal wird ein BUY-Order platziert. Existiert noch keine offene Position**, wird eine erste Long-Position eröffnet, indem 10 % des aktuell verfügbaren Kontoguthaben (Account***) investiert werden. Ist bereits eine Position geöffnet, wird bei weiteren UP-Signalen ein Nachkauf-Order ausgeführt, bei dem zusätzlich 5 % des verbleibenden freien Kapitals investiert werden. Das investierte Kapital wird dabei vom Account abgezogen und in eine offene Position überführt.
+Bei einem bestätigten DOWN-Signal wird ein Verkaufs-Order (SELL) ausgelöst. Falls eine Position besteht, wird diese vollständig geschlossen, indem die gesamte gehaltene Asset-Menge zum aktuellen Schlusskurs verkauft wird. Der Verkaufserlös wird dem Account wieder gutgeschrieben, und die Position wird aus dem Portfolio entfernt. Existiert keine offene Position, wird kein Order ausgeführt.
+Nach jedem Zeitschritt wird der Portfoliowert neu berechnet. Die Equity ergibt sich aus der Summe des verfügbaren Kontoguthabens und dem aktuellen Marktwert der offenen Position. Diese fortlaufende Neubewertung ermöglicht die Konstruktion einer Equity-Kurve, welche die historische Performance der Handelsstrategie im Backtesting widerspiegelt.
+
+*Order - eine konkrete Handelsanweisung, die aufgrund eines Modellsignals ausgelöst wird.
+In dieser Strategie entspricht ein Order einem Kauf (BUY) oder einem Verkauf (SELL), der zum Schlusskurs des aktuellen Zeitpunkts ausgeführt wird. 
+
+**Position - der aktuell gehaltene Marktanteil des Assets.
+Umfasst die gehaltene Asset-Menge (Shares) sowie das insgesamt investierte Kapital. Eine Position entsteht durch einen BUY-Order, kann durch weitere BUY-Orders vergrößert werden und wird durch einen SELL-Order vollständig geschlossen.
+
+***Account - das verfügbare liquide Kapital der Strategie.
+Er reduziert sich bei BUY-Orders um den investierten Betrag und erhöht sich bei SELL-Orders um den Verkaufserlös. Der Account enthält ausschließlich freie Mittel und ist ein Bestandteil der Equity-Berechnung.
+
