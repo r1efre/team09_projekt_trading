@@ -2,6 +2,7 @@ import yaml
 import torch
 import torch.nn as nn
 import pandas as pd
+import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 from experiments.exp_1_1.scripts.model_training.BTCSequenceDataset import BTCSequenceDataset
 
@@ -27,6 +28,9 @@ scaled_path = params['POST_SPLIT']['SCALED_PATH']
 x_test_scaled = pd.read_parquet(f'{scaled_path}/x_test_scaled.parquet')
 x_test = pd.read_parquet(f'{scaled_path}/x_test.parquet')
 y_test = pd.read_parquet(f'{scaled_path}/y_test.parquet')
+mapping = pd.read_parquet(f'{scaled_path}/x_test_index_map.parquet')
+mapping["timestamp"] = pd.to_datetime(mapping["timestamp"])
+mapping = mapping.set_index("row_id")
 
 seq = params['MODELING']['SEQUENCE']
 batch_size = params['MODELING']['BATCH_SIZE']
@@ -48,15 +52,34 @@ criterion = nn.CrossEntropyLoss()
 #Modellgewichte laden
 net_test.load_state_dict(torch.load(f"{model_path}/best_model.pt"))
 
+price_series = x_test["close"]
+price_series.index = mapping.loc[price_series.index, "timestamp"].values
+price_series.index = pd.to_datetime(price_series.index)
+
 account_model = 100000
 positions_model = []
-account_real = 100000
-positions_real = []
+equity_curve = []
+equity_timestamps = []
+trades_count = 0
+trades = {}
 net_test.eval()
 
-def setOrder(predicted, row_index, account, positions):
+def calculate_equity(row_index, positions, account):
     current_price = x_test.loc[row_index, 'close']
+    if len(positions) > 0:
+        position_value = positions[0]['shares'] * current_price
+    else:
+        position_value = 0.0
+
+    equity = account + position_value
+    return equity
+
+
+def setOrder(predicted, row_index, account, positions, timestamp):
+    current_price = x_test.loc[row_index, 'close']
+
     if predicted == 2:  # UP - KAUFEN
+        trades[timestamp] = "BUY"
         if len(positions) == 0:
             # Erste Position öffnen
             position_size = account * 0.1
@@ -97,8 +120,8 @@ def setOrder(predicted, row_index, account, positions):
             print(f"   Additional Shares: {additional_shares:.4f}")
             print(f"   Total Shares: {total_shares:.4f}")
 
-        return account
     elif predicted == 0:  # DOWN - VERKAUFEN
+        trades[timestamp] = "SELL"
         if len(positions) > 0:  # Nur verkaufen wenn Position offen
             position = positions[0]
             entry_price = position['entry_price']
@@ -122,8 +145,12 @@ def setOrder(predicted, row_index, account, positions):
             # Position schließen
             positions.clear()
 
-            return account
-    return account
+    if len(positions) > 0:
+        position_value_after = positions[0]['shares'] * current_price
+    else:
+        position_value_after = 0.0
+    equity_after = account + position_value_after
+    return account, equity_after
 
 
 with torch.no_grad():
@@ -146,25 +173,48 @@ with torch.no_grad():
 
                 if diff >= 5:
                     print("---Model---")
-                    account_model = setOrder(predicted, row_index, account_model, positions_model)
+                    timestamp = mapping.loc[row_index, "timestamp"]
+                    equity_timestamps.append(timestamp)
+                    account_model, equity = setOrder(predicted, row_index, account_model, positions_model, timestamp)
+                    equity_curve.append(equity)
+                    trades_count += 1
 
+                else:
+                    equity = calculate_equity(row_index, positions_model, account_model)
+                    equity_curve.append(equity)
+                    timestamp = mapping.loc[row_index, "timestamp"]
+                    equity_timestamps.append(timestamp)
 
-with torch.no_grad():
-    for inputs, labels, indices in test_loader:
-        outputs = net_test(inputs)
-        probs = torch.softmax(outputs, dim=1)
+            else:
+                equity = calculate_equity(row_index, positions_model, account_model)
+                equity_curve.append(equity)
+                timestamp = mapping.loc[row_index, "timestamp"]
+                equity_timestamps.append(timestamp)
 
-        for i in range(probs.shape[0]):
-            row_index = indices[i].item()
-            true_label = labels[i].item()
-
-            if true_label in [0, 2]:  # 0=Down, 2=Up
-                print("---Real--")
-                account_real = setOrder(true_label, row_index, account_real, positions_real)
 
 print("-----------------------------------------------")
 print(f"   Account Model: {account_model:.4f}")
-print(f"   Account Real: {account_real:.4f}")
+
+
+equity_series = pd.Series(
+    equity_curve,
+    index=pd.to_datetime(equity_timestamps)
+).sort_index()
+
+plt.figure(figsize=(12, 5))
+plt.plot(equity_series, label="Equity Curve")
+
+plt.title("Equity Curve – Backtesting")
+plt.xlabel("Time")
+plt.ylabel("Equity")
+plt.grid(True)
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+
+
+
 
 
 

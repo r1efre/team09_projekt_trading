@@ -62,5 +62,12 @@ X_train_scaled.to_parquet(f"{scaled_path}/x_train_scaled.parquet", index=False)
 X_val_scaled.to_parquet(f"{scaled_path}/x_val_scaled.parquet", index=False)
 X_test_scaled.to_parquet(f"{scaled_path}/x_test_scaled.parquet", index=False)
 
+mapping_df = pd.DataFrame({
+    "row_id": range(len(X_test_scaled)),
+    "timestamp": X_test_scaled.index
+})
+
+mapping_df.to_parquet(f"{scaled_path}/x_test_index_map.parquet", index=False)
+
 # Save the fitted scaler object for later use
 joblib.dump(scaler, art / "scaler.joblib")
