@@ -39,8 +39,8 @@ def add_rsi(df: pd.DataFrame, col: str, window: int) -> pd.DataFrame:
     gain = delta.clip(lower=0)
     loss = -delta.clip(upper=0)
 
-    avg_gain = gain.rolling(window=window, min_periods=window).mean()
-    avg_loss = loss.rolling(window=window, min_periods=window).mean()
+    avg_gain = gain.rolling(window=window, min_periods=1).mean()
+    avg_loss = loss.rolling(window=window, min_periods=1).mean()
 
     rs = avg_gain / avg_loss.replace(0, np.nan)
     df["rsi"] = 100 - (100 / (1 + rs))
@@ -59,7 +59,7 @@ def add_atr(df: pd.DataFrame, window: int) -> pd.DataFrame:
     ])
 
     # ATR
-    atr_abs = pd.Series(true_range).rolling(window=window).mean()
+    atr_abs = pd.Series(true_range).rolling(window=window, min_periods=1).mean()
     df[f"atr_{window}"] = atr_abs / df["close"]
 
     return df
