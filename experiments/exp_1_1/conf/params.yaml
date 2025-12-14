@@ -1,12 +1,12 @@
 DATA_ACQUISITION:
-  DATA_PATH: '/Users/rita/Desktop/Uni Bachelor/3.1/Unternehmenssoftware/data/raw'
+  DATA_PATH: 'C:/5.Semester/Unternehmenssoftware/data/raw'
   START_DATE: '2021-01-01'
   END_DATE: '2025-11-01'
   SYMBOLS:
     - 'BTC/USD'
     - 'ETH/USD'
 DATA_PREP:
-  PROCESSED_PATH: '/Users/rita/Desktop/Uni Bachelor/3.1/Unternehmenssoftware/data/processed'
+  PROCESSED_PATH: 'C:/5.Semester/Unternehmenssoftware/data/processed'
   RAW_DATA_FILE: 'dataMerged.parquet'
   RETURN_PERIODS: [1, 6, 24]
   EMA_PERIODS: [6, 24]
@@ -15,9 +15,9 @@ SPLIT_DATA:
   TRAIN_DATE: '2024-05-20'
   VALIDATION_DATE: '2025-05-08'
 POST_SPLIT:
-  SCALED_PATH: '/Users/rita/Desktop/Uni Bachelor/3.1/Unternehmenssoftware/data/scaled'
+  SCALED_PATH: 'C:/5.Semester/Unternehmenssoftware/data/scaled'
 MODELING:
   SEQUENCE: 6
   INPUT_SIZE: 13
   BATCH_SIZE: 64
-  SAVE_MODEL: '/Users/rita/Desktop/Uni Bachelor/3.1/Unternehmenssoftware/team09_projekt_trading/experiments/exp_1_1/model'
+  SAVE_MODEL: 'C:/5.Semester/Unternehmenssoftware/team09_projekt_trading/experiments/exp_1_1/model'

@@ -9,9 +9,7 @@ import numpy as np
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import MarketOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
-from alpaca.data.historical import CryptoHistoricalDataClient
-from alpaca.data.requests import CryptoBarsRequest
-from alpaca.data.timeframe import TimeFrame
+import yfinance as yf
 import pandas as pd
 from pathlib import Path
 import joblib
@@ -76,19 +74,19 @@ net_trade.eval()
 trading_client = TradingClient(api_key_id, api_secret, paper=True)
 
 def place_order(side, notional=None):
+
     if side == OrderSide.BUY:
 
         order_data = MarketOrderRequest(
-            symbol="BTC/USD",
+            symbol="BTCUSD",
             notional=notional,
             side=OrderSide.BUY,
             time_in_force=TimeInForce.IOC
         )
 
-
     elif side == OrderSide.SELL:
         try:
-            position = trading_client.get_open_position("BTC/USD")
+            position = trading_client.get_open_position("BTCUSD")
         except Exception:
             print("No open position to sell")
             return None
@@ -100,7 +98,7 @@ def place_order(side, notional=None):
             return None
 
         order_data = MarketOrderRequest(
-            symbol="BTC/USD",
+            symbol="BTCUSD",
             qty=qty,
             side=OrderSide.SELL,
             time_in_force=TimeInForce.IOC
@@ -122,92 +120,109 @@ def place_order(side, notional=None):
 
 def download_and_merge_btc_eth(lookback: int) -> pd.DataFrame:
     """
-    Downloads recent hourly BTC and ETH bars,
-    keeps only fully closed candles,
-    and merges ETH close price into BTC dataframe.
-    Returns a clean DataFrame with a timestamp column (UTC).
+    Downloads recent hourly BTC and ETH data using yfinance,
+    removes the currently forming candle, and merges ETH close into BTC data.
     """
 
-    crypto_client = CryptoHistoricalDataClient(
-        api_key=api_key_id,
-        secret_key=api_secret
+    period_days = max(5, int((lookback / 24) + 2))
+
+    def _normalize_yf_df(df: pd.DataFrame) -> pd.DataFrame:
+        """Normalize column names and structure"""
+        df = df.copy()
+        df = df.reset_index()
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = [c[0] for c in df.columns]
+
+        df.columns = [c.lower() for c in df.columns]
+
+        # Datetime/Date zu timestamp umbenennen
+        if 'datetime' in df.columns:
+            df = df.rename(columns={'datetime': 'timestamp'})
+        elif 'date' in df.columns:
+            df = df.rename(columns={'date': 'timestamp'})
+        elif 'index' in df.columns:
+            df = df.rename(columns={'index': 'timestamp'})
+
+        # Timestamp zu UTC konvertieren
+        if 'timestamp' in df.columns:
+            df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True)
+        else:
+            raise RuntimeError(f"No datetime column found. Columns: {df.columns.tolist()}")
+
+        return df
+
+    # ==================== BTC ====================
+    btc_df = yf.download(
+        "BTC-USD",
+        period=f"{period_days}d",
+        interval="1h",
+        auto_adjust=True,
+        prepost=False,
+        progress=False
     )
 
-    # -------------------------
-    # BTC
-    # -------------------------
-    btc_bars = crypto_client.get_crypto_bars(CryptoBarsRequest(
-        symbol_or_symbols="BTC/USD",
-        timeframe=TimeFrame.Hour,
-        limit=lookback + 2
-    ))
-    btc_df = btc_bars.df.copy().sort_index()
+    btc_df = _normalize_yf_df(btc_df)  # Jetzt enthält es schon timestamp!
 
-    # laufende Kerze entfernen + auf lookback kürzen
-    btc_df = btc_df.iloc[:-1].tail(lookback)
+    # Remove the last (likely still forming) candle
+    if len(btc_df) > 1:
+        btc_df = btc_df.iloc[:-1]
+    btc_df = btc_df.sort_values("timestamp").tail(lookback)
 
-    # Falls MultiIndex (timestamp, symbol) oder (symbol, timestamp): zu Spalten machen
-    btc_df = btc_df.reset_index()
+    print(f"📊 BTC: {len(btc_df)} rows")
 
-    # "symbol" ggf. rauswerfen (kommt je nach API als Spalte)
-    btc_df = btc_df.drop(columns=["symbol"], errors="ignore")
+    # ==================== ETH ====================
+    eth_df = yf.download(
+        "ETH-USD",
+        period=f"{period_days}d",
+        interval="1h",
+        auto_adjust=True,
+        prepost=False,
+        progress=False
+    )
 
-    # timestamp sauber als UTC
-    btc_df["timestamp"] = pd.to_datetime(btc_df["timestamp"], utc=True)
+    eth_df = _normalize_yf_df(eth_df)
 
-    # -------------------------
-    # ETH
-    # -------------------------
-    eth_bars = crypto_client.get_crypto_bars(CryptoBarsRequest(
-        symbol_or_symbols="ETH/USD",
-        timeframe=TimeFrame.Hour,
-        limit=lookback + 2
-    ))
-    eth_df = eth_bars.df.copy().sort_index()
+    if len(eth_df) > 1:
+        eth_df = eth_df.iloc[:-1]
+    eth_df = eth_df.sort_values("timestamp").tail(lookback)
 
-    eth_df = eth_df.iloc[:-1].tail(lookback)
-    eth_df = eth_df.reset_index()
-
-    eth_df["timestamp"] = pd.to_datetime(eth_df["timestamp"], utc=True)
-
-    # nur timestamp + close (umbenennen)
+    # Keep only timestamp + eth close
     eth_df = eth_df[["timestamp", "close"]].rename(columns={"close": "eth_close"})
 
-    # -------------------------
-    # Merge auf timestamp
-    # -------------------------
-    merged_df = btc_df.merge(eth_df, on="timestamp", how="inner")
+    print(f"📊 ETH: {len(eth_df)} rows")
 
-    # final clean
-    merged_df = merged_df.sort_values("timestamp").reset_index(drop=True)
-
-    # Optional: Safety-Check
+    # ==================== MERGE ====================
+    merged_df = (
+        btc_df.merge(eth_df, on="timestamp", how="inner")
+        .sort_values("timestamp")
+        .reset_index(drop=True)
+    )
+    merged_df['vwap'] = 1
     if merged_df.empty:
-        raise RuntimeError(
-            "Merge produced 0 rows. BTC/ETH timestamps do not align or no data returned."
-        )
+        raise RuntimeError("Merged DF is empty. BTC/ETH timestamps did not align.")
 
+    # Validate required columns
+    required = ["timestamp", "open", "high", "low", "close", "volume", "eth_close"]
+    missing = [c for c in required if c not in merged_df.columns]
+    if missing:
+        raise RuntimeError(f"Missing columns {missing}. Have: {merged_df.columns.tolist()}")
+
+    print(f"✅ Merged: {len(merged_df)} rows")
     return merged_df
 
 
 def set_features(df):
     data_with_features, _ = generate_features(df, return_periods, ema_periods, rsi_atr_window)
-    data_complete = data_with_features.drop(columns=["timestamp", "symbol"], errors="ignore")
-    print("Ausführlich")
-    print(data_complete.isna().sum())
-    print(len(df))
-    print(df.shape)  # (Zeilen, Spalten)
-    print(df.shape[0])  # Nur Zeilen
-    print(df.shape[1])
+    data_complete = data_with_features.dropna().reset_index(drop=True)
+    data_complete = data_complete.drop(columns=["timestamp", "symbol"], errors="ignore")
+
+    expected_columns = list(scaler.feature_names_in_)
+    data_complete = data_complete[expected_columns]
     X_scaled = scaler.transform(data_complete)
     X_scaled_df = pd.DataFrame(X_scaled, columns=data_complete.columns)
 
     columns_to_drop = ['open', 'high', 'low', 'vwap', 'eth_close']
     X = X_scaled_df.drop(columns=columns_to_drop, errors='ignore')
-
-    print("\n🔍 Final feature names:")
-    for i, col in enumerate(X.columns):
-        print(f"Position {i}: {col}")
 
     return pd.DataFrame(X, columns=X.columns)
 
@@ -241,31 +256,18 @@ def has_position(symbol="BTC/USD") -> bool:
         return False
 
 def run_trading_step():
-    raw_data = download_and_merge_btc_eth(lookback=500)
+    raw_data = download_and_merge_btc_eth(lookback=120)
     features_df = set_features(raw_data)
     if len(features_df) < seq:
         print("Not enough data for sequence yet")
         return
 
     x_seq = features_df.tail(seq).values
-    # DEBUGGING: Prüfe auf NaN
-    print("=" * 50)
-    print(f"x_seq shape: {x_seq.shape}")
-    print(f"NaN count: {np.isnan(x_seq).sum()}")
-    print(f"First row: {x_seq[0]}")
-    print(f"Last row: {x_seq[-1]}")
-    print("=" * 50)
-
-    # Wenn NaN vorhanden, abbrechen
-    if np.isnan(x_seq).any():
-        print("❌ ERROR: x_seq contains NaN values!")
-        print(f"NaN positions:\n{np.argwhere(np.isnan(x_seq))}")
-        return
     predicted, p_down, p_hold, p_up, diff = predict_signal(net_trade, x_seq)
 
     print(f"Prediction: {predicted} | diff={diff:.2f}")
 
-    if predicted in [0, 2] and diff >= 5:
+    if predicted in [0, 2] and diff >= 3:
         account = trading_client.get_account()
         if account.trading_blocked:
             print("Account is currently restricted from trading.")
@@ -275,7 +277,7 @@ def run_trading_step():
             print("🟢 BUY signal")
             buying_power = float(trading_client.get_account().buying_power)
             if buying_power > 100:
-                notional = buying_power * (0.05 if has_position("BTC/USD") else 0.10)
+                notional = round(buying_power * (0.05 if has_position("BTC/USD") else 0.10),2)
                 place_order(OrderSide.BUY, notional=notional)
             else:
                 print("Not enough buying power.")
@@ -298,12 +300,12 @@ last_trade_hour = None
 while True:
     now = datetime.now(timezone.utc)
     current_hour = now.replace(minute=0, second=0, microsecond=0)
-    #if now.minute != 0 and last_trade_hour != current_hour:
-    last_trade_hour = current_hour
-    print(f"\nRunning trading step at {now}")
-    run_trading_step()
+    if now.minute != 0 and last_trade_hour != current_hour:
+        last_trade_hour = current_hour
+        print(f"\nRunning trading step at {now}")
+        run_trading_step()
 
-    time.sleep(10)
+    time.sleep(60)
 
 
 
