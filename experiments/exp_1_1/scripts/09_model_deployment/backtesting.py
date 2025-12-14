@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import pandas as pd
 import matplotlib.pyplot as plt
+from onnxruntime.transformers.models.llama.dist_settings import print_out
 from torch.utils.data import DataLoader
 from experiments.exp_1_1.scripts.model_training.BTCSequenceDataset import BTCSequenceDataset
 
@@ -195,29 +196,198 @@ with torch.no_grad():
 print("-----------------------------------------------")
 print(f"   Account Model: {account_model:.4f}")
 
-
 equity_series = pd.Series(
     equity_curve,
     index=pd.to_datetime(equity_timestamps)
 ).sort_index()
 
+# Overall performance metrics
+final_equity = equity_series.iloc[-1]
+initial_capital = 100000
+
+absolute_return = final_equity - initial_capital
+relative_return = absolute_return / initial_capital * 100
+
+start_date = equity_series.index.min()
+end_date = equity_series.index.max()
+
+print("Final capital:", final_equity)
+print("Absolute return:", absolute_return)
+print("Relative return (%):", relative_return)
+print("Trades:", trades_count)
+print(f"Period: {start_date} - {end_date}")
+
+
+# Equity curve
 plt.figure(figsize=(12, 5))
 plt.plot(equity_series, label="Equity Curve")
 
 plt.title("Equity Curve – Backtesting")
-plt.xlabel("Time")
+plt.xlabel("Zeit")
 plt.ylabel("Equity")
 plt.grid(True)
 plt.legend()
 
 plt.tight_layout()
-plt.show()
+plt.savefig("../../images/09_equity_curve.png")
+plt.close()
 
 
 
+# Trades series (timestamp - BUY/SELL)
+# Das trades-Dictionary speichert alle von der Strategie generierten BUY- und SELL-Aktionen.
+# Es wird verwendet, um Zeitpunkt, Häufigkeit und zeitliche Verteilung der Handelsentscheidungen zu analysieren.
+
+trades_series = pd.Series(trades)
+trades_series.index = pd.to_datetime(trades_series.index)
+trades_series = trades_series.sort_index()
+
+# Remove timezone from trades_series
+if getattr(trades_series.index, "tz", None) is not None:
+    trades_series.index = trades_series.index.tz_localize(None)
 
 
 
+# Monthly count of BUY/SELL actions
+buy_per_month = (trades_series == "BUY").resample("ME").sum()
+sell_per_month = (trades_series == "SELL").resample("ME").sum()
 
+plt.figure(figsize=(12, 4))
+plt.plot(buy_per_month.index, buy_per_month.values, label="BUY-Anzahl")
+plt.plot(sell_per_month.index, sell_per_month.values, label="SELL-Anzahl")
+plt.title("BUY vs SELL-Aktionen im Zeitverlauf (monatlich)")
+plt.xlabel("Zeit")
+plt.ylabel("Anzahl")
+plt.grid(True)
+plt.legend()
+
+plt.tight_layout()
+plt.savefig("../../images/09_buy_sell_actions.png")
+plt.close()
+
+
+
+# Price series (timestamp -> close)
+# Die Price-Series repräsentiert die historischen BTC-Schlusskurse mit Zeitstempel.
+# Sie dient als Referenz für die Marktentwicklung und zur Visualisierung von Handelszeitpunkten.
+price_series = pd.Series(
+    data=x_test["close"].values,
+    index=pd.to_datetime(mapping.loc[x_test.index, "timestamp"].values)
+).sort_index()
+
+# Make price timestamps tz-naive for consistent plotting
+if getattr(price_series.index, "tz", None) is not None:
+    price_series.index = price_series.index.tz_convert(None)
+
+
+
+# Price + BUY/SELL signals
+WINDOW = "5D"          # "1D", "3D", "7D"
+MIN_TRADES = 3         # minimum number of actions required to plot a window
+
+if trades_series.empty:
+    raise ValueError("No trades found: trades_series is empty.")
+
+trade_times = trades_series.index.sort_values()
+trade_counts = pd.Series(1, index=trade_times)
+rolling_counts = trade_counts.rolling(WINDOW).sum()
+
+best_end = rolling_counts.idxmax()
+best_count = int(rolling_counts.loc[best_end])
+
+if best_count < MIN_TRADES:
+    center = trade_times[0]
+    best_start = center - pd.Timedelta(WINDOW) / 2
+    best_end = center + pd.Timedelta(WINDOW) / 2
+else:
+    best_start = best_end - pd.Timedelta(WINDOW)
+
+price_window = price_series.loc[best_start:best_end]
+trades_window = trades_series.loc[best_start:best_end]
+
+buy_times_w = trades_window[trades_window == "BUY"].index
+sell_times_w = trades_window[trades_window == "SELL"].index
+
+buy_prices = price_window.reindex(buy_times_w, method="nearest") if len(buy_times_w) else pd.Series(dtype=float)
+sell_prices = price_window.reindex(sell_times_w, method="nearest") if len(sell_times_w) else pd.Series(dtype=float)
+
+plt.figure(figsize=(12, 5))
+plt.plot(price_window, label="BTC Close", linewidth=1.5)
+
+if not buy_prices.empty:
+    plt.scatter(buy_prices.index, buy_prices.values, marker="^", s=90, label="BUY")
+
+if not sell_prices.empty:
+    plt.scatter(sell_prices.index, sell_prices.values, marker="v", s=90, label="SELL")
+
+plt.title("Preis mit BUY-/SELL-Signalen")
+plt.xlabel("Zeit")
+plt.ylabel("Preis")
+plt.grid(True)
+plt.legend()
+
+plt.tight_layout()
+plt.savefig("../../images/09_price_actions.png")
+plt.close()
+
+
+
+# Weekly count of BUY/SELL actions
+actions_per_week = trades_series.resample("W").size()
+
+plt.figure(figsize=(12, 4))
+plt.bar(actions_per_week.index.astype(str), actions_per_week.values)
+plt.xlabel("Woche")
+plt.ylabel("Anzahl")
+plt.title("Histogramm der Handelsaktivitäten pro Woche")
+plt.xticks(rotation=45, ha="right")
+plt.grid(axis="y")
+
+plt.tight_layout()
+plt.savefig("../../images/09_trades_per_week.png")
+plt.close()
+
+
+
+# Count of BUY/SELL actions
+counts = trades_series.value_counts().reindex(["BUY", "SELL"]).fillna(0)
+
+plt.figure(figsize=(5, 4))
+plt.bar(
+    counts.index,
+    counts.values,
+    color=["tab:blue", "tab:orange"]
+)
+plt.xlabel("Aktion")
+plt.ylabel("Anzahl")
+plt.title("BUY vs SELL-Anzahl")
+plt.grid(axis="y")
+
+plt.tight_layout()
+plt.savefig("../../images/09_buy_vs_sell.png")
+plt.close()
+
+
+
+# BTC price and strategy equity curve
+if getattr(equity_series.index, "tz", None) is not None:
+    equity_series.index = equity_series.index.tz_convert(None)
+
+common_index = price_series.index.intersection(equity_series.index)
+price_aligned = price_series.loc[common_index]
+equity_aligned = equity_series.loc[common_index]
+
+plt.figure(figsize=(12, 5))
+plt.plot(price_aligned.index, price_aligned.values, label="BTC Close", color="tab:blue", linewidth=1.5)
+plt.plot(equity_aligned.index, equity_aligned.values, label="Equity", color="tab:orange", linewidth=2.0)
+plt.title("Vergleich von BTC-Preis und Equity-Kurve ")
+plt.xlabel("Zeit")
+plt.ylabel("Wert")
+plt.grid(True)
+plt.legend()
+
+plt.tight_layout()
+plt.savefig("../../images/09_btc_price_equity_comparision.png")
+plt.close()
 
 

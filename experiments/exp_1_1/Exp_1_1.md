@@ -11,6 +11,7 @@
 - [Step 6 - Feature Selection](#step-6---feature-selection)
 - [Step 7 - Model Training](#step-7---model-training)
 - [Step 8 - Model Testing](#step-8---model-testing)
+- [Step 9 - Model Deployment](#step-9---deployment)
 
 ---
 
@@ -665,4 +666,70 @@ Umfasst die gehaltene Asset-Menge (Shares) sowie das insgesamt investierte Kapit
 
 ***Account - das verfügbare liquide Kapital der Strategie.
 Er reduziert sich bei BUY-Orders um den investierten Betrag und erhöht sich bei SELL-Orders um den Verkaufserlös. Der Account enthält ausschließlich freie Mittel und ist ein Bestandteil der Equity-Berechnung.
+
+### Overall Performance
+
+**Ergebnisse des Backtestings**
+
+Backtesting-Zeitraum: 08.05.2025 – 31.10.2025 (Stundenauflösung)
+
+Zentrale Kennzahlen:
+
+- Startkapital: 100 000,00
+- Finales Kapital: 110 531,63
+- Absoluter Gewinn: +10 531,63
+- Relative Rendite: +10,53 %
+- Anzahl Trades: 416
+
+Die Strategie erzielt im betrachteten Zeitraum eine stetig positive Gesamtperformance bei hoher Handelsaktivität.
+
+*1) Entwicklung der Equity-Kurve im Backtesting*
+
+Der Graph zeigt, wie sich der Wert des Portfolios im Laufe der Zeit verändert, und bewertet die Rentabilität und Nachhaltigkeit der Handelsstrategie auf der Grundlage der Modellprognosen.
+
+![Backtesting Performance](images/09_equity_curve.png)
+
+Die Equity-Kurve zeigt einen klaren langfristigen Aufwärtstrend über den gesamten Backtesting-Zeitraum hinweg, mit zeitweiligen Rückgängen. 
+Der stufenweise Verlauf der Kurve spiegelt die grundlegende Handelslogik wider, bei der Positionen schrittweise eröffnet und vollständig geschlossen werden. 
+Trotz Phasen erhöhter Marktvolatilität und vorübergehender Rückgänge bleibt der Kapitalverlust begrenzt, und es kommt zu keinen abrupten oder strukturellen Kapitalverlusten. Insgesamt deutet der Verlauf der Kapitalkurve darauf hin, dass die auf LSTM basierende Handelsstrategie in der Lage ist, stabil positive Renditen zu erzielen.
+
+
+*2) Zeitliche Verteilung von BUY- und SELL-Signalen*
+
+![Backtesting Signals](images/09_buy_sell_actions.png)
+
+Das Diagramm zeigt, dass im Zeitverlauf deutlich mehr BUY- als SELL-Signale generiert werden, insbesondere in späteren Monaten. Dies deutet darauf hin, dass das LSTM-Modell überwiegend positive Markterwartungen erkennt und die Strategie gezielt auf Aufwärtsbewegungen ausgerichtet ist.
+
+*3) BTC-Preisverlauf mit generierten BUY- und SELL-Signalen*
+
+Für die Darstellung des Preisverlaufs mit BUY- und SELL-Signalen wird nicht der gesamte Backtesting-Zeitraum, sondern ein repräsentatives Zeitfenster ausgewählt.
+Dazu wird ein gleitendes Zeitfenster (z. B. 5 Tage) verwendet, innerhalb dessen die Anzahl der Handelsaktionen maximiert wird.
+Konkret wird das Zeitfenster gewählt, in dem die höchste Dichte an BUY- und SELL-Signalen auftritt. Dadurch wird sichergestellt, dass der dargestellte Ausschnitt ausreichend viele Handelsentscheidungen enthält und somit eine aussagekräftige visuelle Analyse ermöglicht.
+
+![Backtesting BTC-Preisverlauf mit Signalen](images/09_price_actions.png)
+
+Der Graph zeigt, dass BUY-Signale überwiegend in Phasen fallender oder konsolidierender Preise auftreten, während SELL-Signale vor allem nach kurzfristigen Aufwärtsbewegungen gesetzt werden. Die Signale sind dabei nicht zufällig verteilt, sondern folgen erkennbaren Preisbewegungen.
+
+*4) Wöchentliche Handelsaktivität der Strategie*
+
+![Trades pro Woche](images/09_trades_per_week.png)
+
+Das Histogramm zeigt eine stark schwankende Anzahl an Trades pro Woche. In einzelnen Wochen tritt eine hohe Handelsaktivität auf, während in anderen Zeiträumen nur wenige oder gar keine Trades ausgeführt werden.
+Die ungleichmäßige Verteilung der Trades deutet darauf hin, dass die Strategie nicht konstant handelt, sondern ihre Aktivität an die Marktbedingungen anpasst und vor allem in Phasen mit klaren Signalen verstärkt aktiv wird.
+
+*5) Gesamtverteilung der BUY- und SELL-Aktionen*
+
+![Gesamtverteilung der BUY- und SELL-Aktionen](images/09_buy_vs_sell.png)
+
+Der Graph zeigt, dass die Anzahl der BUY-Aktionen deutlich höher ist als die Anzahl der SELL-Aktionen. Dies weist darauf hin, dass die Strategie häufiger Positionen eröffnet bzw. aufstockt, während Positionsschließungen seltener erfolgen.
+Obwohl im zugrunde liegenden Datensatz insgesamt mehr DOWN-Signale vom Modell erkannt werden, führen diese nicht automatisch zu SELL-Aktionen. Ein SELL wird nur dann ausgeführt, wenn tatsächlich eine offene Position existiert. DOWN-Signale ohne bestehende Position bleiben daher ohne Handelsaktion, was die höhere Anzahl an BUY-Aktionen im Vergleich zu SELL-Aktionen erklärt.
+
+*6) Vergleich von Bitcoin-Preis und Portfolioentwicklung*
+
+![Wertvergleich](images/09_btc_price_equity_comparision.png)
+
+Der Bitcoin-Preis zeigt im Zeitverlauf starke Schwankungen mit ausgeprägten Auf- und Abwärtsbewegungen. Die Equity-Kurve folgt dem allgemeinen Markttrend, verläuft jedoch deutlich glatter und mit geringerer Volatilität. 
+In Phasen steigender Preise wächst auch das Portfolio, während Rückgänge des Marktes zu temporären, aber begrenzten Rücksetzern der Equity führen. Beide Kurven entwickeln sich grundsätzlich in die gleiche Richtung, jedoch mit unterschiedlicher Dynamik. 
+Während der Markt stark schwankt, wächst das Kapital kontrollierter. 
+
 
