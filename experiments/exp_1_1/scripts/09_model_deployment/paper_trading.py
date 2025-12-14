@@ -14,9 +14,11 @@ import pandas as pd
 from pathlib import Path
 import joblib
 
-# Define the path to the scaler directory
-art = Path("../../scaler")
-scaler = joblib.load(art / "scaler.joblib")
+BASE_DIR = Path(__file__).resolve().parent
+SCALER_DIR = BASE_DIR / "../../scaler"
+SCALER_DIR = SCALER_DIR.resolve()
+
+scaler = joblib.load(SCALER_DIR / "scaler.joblib")
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 EXP_DIR = os.path.abspath(os.path.join(THIS_DIR, "..", ".."))
