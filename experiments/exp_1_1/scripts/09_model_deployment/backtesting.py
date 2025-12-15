@@ -233,33 +233,63 @@ equity_series = pd.Series(
     index=pd.to_datetime(equity_timestamps)
 ).sort_index()
 
-# Durchschnittliche Anzahl der Transaktionen und durchschnittliche Rendite für x Stunden
-def trades_stats_by_hours(trade_log, hours=24):
+# Durchschnittliche Anzahl der Aktionen (BUY + SELL)
+# und durchschnittliche Rendite der abgeschlossenen Transaktionen
+# für x Stunden
+def trades_stats_by_hours(action_log, trade_log, hours=24):
 
-    if len(trade_log) == 0:
-        return None, {"hours": hours, "avg_trades_per_bin": 0.0, "avg_trade_return_pct_per_bin": None}
+    if len(action_log) == 0:
+        return None, {
+            "hours": hours,
+            "avg_actions_per_bin": 0.0,
+            "avg_trade_return_pct_per_bin": None,
+            "total_actions": 0
+        }
 
-    df = pd.DataFrame(trade_log)
-    df["timestamp"] = pd.to_datetime(df["timestamp"])
-    df = df.sort_values("timestamp").set_index("timestamp")
+    # ---------- Aktionen (BUY + SELL) ----------
+    df_actions = pd.DataFrame(action_log)
+    df_actions["timestamp"] = pd.to_datetime(df_actions["timestamp"])
+    df_actions = df_actions.sort_values("timestamp").set_index("timestamp")
+
+    # BUY_ADD als BUY zählen
+    df_actions["action"] = df_actions["action"].replace({"BUY_ADD": "BUY"})
 
     rule = f"{int(hours)}h"
 
-    # Anzahl der abgeschlossenen Transaktionen in jedem Fenster
-    trades_per_bin = df["profit_pct"].resample(rule).count().rename("trades_count")
+    actions_per_bin = (
+        df_actions
+        .resample(rule)
+        .size()
+        .rename("actions_count")
+    )
 
-    # Durchschnittliche Rendite der Transaktionen (in %) in jedem Fenster
-    avg_return_per_bin = df["profit_pct"].resample(rule).mean().rename("avg_profit_pct")
+    # ---------- Trades (SELL → Rendite) ----------
+    if len(trade_log) > 0:
+        df_trades = pd.DataFrame(trade_log)
+        df_trades["timestamp"] = pd.to_datetime(df_trades["timestamp"])
+        df_trades = df_trades.sort_values("timestamp").set_index("timestamp")
 
-    df_bins = pd.concat([trades_per_bin, avg_return_per_bin], axis=1)
+        avg_return_per_bin = (
+            df_trades["profit_pct"]
+            .resample(rule)
+            .mean()
+            .rename("avg_profit_pct")
+        )
+    else:
+        avg_return_per_bin = pd.Series(name="avg_profit_pct", dtype=float)
+
+    # ---------- Zusammenführen ----------
+    df_bins = pd.concat([actions_per_bin, avg_return_per_bin], axis=1)
 
     summary = {
         "hours": hours,
-        "avg_trades_per_bin": df_bins["trades_count"].mean(),
+        "avg_actions_per_bin": df_bins["actions_count"].mean(),
         "avg_trade_return_pct_per_bin": df_bins["avg_profit_pct"].mean(),
-        "total_trades": int(df_bins["trades_count"].sum())
+        "total_actions": int(df_bins["actions_count"].sum())
     }
+
     return df_bins, summary
+
 
 
 # Anzahl BUY/SELL nach Fenstern X Stunden
@@ -299,14 +329,16 @@ def buy_sell_activity_by_hours(action_log, hours=12, count_buy_add_as_buy=True):
     return df_bins, summary
 
 
-X_HOURS = 48  #  6, 12, 24, 48, ...
+X_HOURS = 20  #  6, 12, 24, 48, ...
 
-df_bins, summary = trades_stats_by_hours(trade_log, hours=X_HOURS)
+df_bins, summary = trades_stats_by_hours(action_log, trade_log, hours=X_HOURS)
 
-print("\n--- Trade stats by window ---")
+print("\n--- Action stats by window ---")
 print("Window (hours):", summary["hours"])
-print("Avg trades per window:", summary["avg_trades_per_bin"])
+print("Avg actions per window:", summary["avg_actions_per_bin"])
 print("Avg trade return per window (%):", summary["avg_trade_return_pct_per_bin"])
+print("Total actions:", summary["total_actions"])
+
 
 
 df_act_bins, act_summary = buy_sell_activity_by_hours(action_log, hours=X_HOURS)
