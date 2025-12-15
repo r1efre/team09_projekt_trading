@@ -748,6 +748,7 @@ Während der Markt stark schwankt, wächst das Kapital kontrollierter.
 
 Data acquisition:
 - Nutzung der yfinance API
+- Daten werden einmal pro Stunde geladen
 - Verwendung der letzten 120 Stunden, um ausreichend Daten zu haben, um Features wie RSI und EMA zu berechnen
 
 Feature Berechnung, Skalierung, Drop selected features:
@@ -770,11 +771,12 @@ Das Setzen eines Orders folgt der gleichen Logik wie der Backtesting Algorithmus
 ![equity trading](images/09_equity_trading.png)
 
 - Betrachteter Zeitraum: 15.12.2025 10 Uhr bis 20 Uhr
+- Betrachtetes Zeitfenster 10 Stunden
 - zeigt insgesamt einen sinkenden Trend
 - Start Portfolio: $100,710.87
 - End Portfolio: $96,876.92 
 - Veränderung: $-3,833.95 (-3.81%)
-- getätigte Trades: 11
+- getätigte Trades: 10
 - jede Stunde wurde ein Order gesetzt
 - es gab ausschließlich Buy Signale 
 
@@ -791,12 +793,57 @@ Das Setzen eines Orders folgt der gleichen Logik wie der Backtesting Algorithmus
 
 ![Stündliche Änderungen](images/09_changes_per_hour.png)
 
-- Stündlicher Verlust ist zu verzeichnen 
+- Stündlicher Verlust ist zu verzeichnen
+- Abwärtstrend deutlich zu erkennen
 
 ### Paper trading vs Backtesting
 
+Da beim Paper Trading ein Zeitraum von 10 Fenstern betrachtet wird, werden in der folgenden Tabelle die durchschnittlichen Werte innerhalb eines 10 Stunden Fensters verwendet.
+
+| Merkmal              | Paper Trading | Backtesting                     |
+|----------------------|---------------|---------------------------------|
+| Actions count        | 10            | 0.65                            |
+| Verteilung Buy/Sell  | 100% Buy      | Buy-Signale überwiegen deutlich |
+| Equity               | $96,876.92    | $104,665.14                     |
+| Absolute Veränderung | $-3,833.95    | $+24.89                         |
+| Return               | +0.0248%      | -3.81%                          |
 
 
+Der Vergleich zeigt, dass beim Paper Trading deutlich mehr Trading-Actions ausgeführt wurden als beim Backtesting. Dies lässt sich auf folgende Faktoren zurückführen:
+
+Beim Backtesting kam es häufiger zu keinen Orders, weil:
+- Das Modell öfter das Neutral-Signal ausgegeben hat
+- Die vorhergesagten Wahrscheinlichkeiten für UP- und DOWN-Trends zu ähnlich waren (Differenz < 5%), wodurch keine eindeutige Handelsentscheidung getroffen werden konnte
+
+Beim Paper Trading hingegen:
+- Lieferte das Modell Wahrscheinlichkeiten mit größeren Unterschieden zwischen den Trend-Klassen
+- War das Modell bei seinen Vorhersagen konfidenter und überschritt häufiger die Mindest-Differenz von 5%
+- Führte dies zu mehr ausgeführten Trades
+
+Das Modell zeigte beim Paper Trading eine höhere Vorhersagesicherheit (Confidence) als beim Backtesting, was sich in eindeutigeren Handelssignalen und einer höheren Anzahl an ausgeführten Orders niederschlug.
+
+Insgesamt kann man sagen, dass das Modell und die dazugehörige Trading-Strategie im Backtesting besser funktioniert. 
+Allerding muss man beachten, dass beim Paper Trading nur ein einziges 10-Stunden Fenster betrachtet wurde und dies nicht repräsentativ ist, da es zufällig ein Tag sein kann, in dem, Bitcoin eher fällt.
+Für einen aussagekräftigen Vergleich muss man Paper Trading über einen längeren Zeitraum betrachten.
+
+## Fazit und Next Steps
+
+Das Modell-Training und Testing hat gezeigt:
+- Modell sagt den Bitcoin-Trend nur minimal besser vor als eine zufällige Vorhersage 
+- Deutlich mehr Buy-Signale als Sell-Signale 
+- Trading-Strategie führt über einen längeren Zeitraum dazu, dass die Buying Power sehr strak sinkt, weil zu viele Buy-Signale gegeben werden
+
+Schritte zur Verbesserung des Modells:
+- Verwendung von Minuten-Daten statt Stunden-Daten für das Training -> kurzfristige Trends besser erkennbar
+- Überprüfung, ob eine zu große Ungleichverteilung an UP und DOWN Vorhersagen besteht
+
+Target-Berechnung anpassen: 
+- Überprüfung, ob ein Neutral-Trend notwendig ist oder er die Vorhersage erschwert
+- Überprüfen, ab welchem Return-Wert der Trend als Neutral eingestuft werden kann
+
+Trading-Strategie anpassen:
+- Buy-Signal sollte nicht so oft hintereinander ausgeführt werden
+- Überprüfen, wie groß eine vorhergesagte Wahrscheinlichkeit sein muss, damit ein Buy/Sell Signal gesendet wird
 
 
 

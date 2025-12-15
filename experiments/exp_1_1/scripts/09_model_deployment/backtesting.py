@@ -328,7 +328,7 @@ def buy_sell_activity_by_hours(action_log, hours=12, count_buy_add_as_buy=True):
     return df_bins, summary
 
 
-X_HOURS = 20  #  6, 12, 24, 48, ...
+X_HOURS = 10  #  6, 12, 24, 48, ...
 
 df_bins, summary = trades_stats_by_hours(action_log, trade_log, hours=X_HOURS)
 
