@@ -679,7 +679,10 @@ Zentrale Kennzahlen:
 - Finales Kapital: 110 531,63
 - Absoluter Gewinn: +10 531,63
 - Relative Rendite: +10,53 %
-- Anzahl Trades: 416
+- Anzahl Trades-Signalen: 416
+- Anzahl BUY-Orders: 253
+- Anzahl SELL-Orders: 15
+- 
 
 Die Strategie erzielt im betrachteten Zeitraum eine stetig positive Gesamtperformance bei hoher Handelsaktivität.
 
@@ -696,7 +699,7 @@ Trotz Phasen erhöhter Marktvolatilität und vorübergehender Rückgänge bleibt
 
 *2) Zeitliche Verteilung von BUY- und SELL-Signalen*
 
-![Backtesting Signals](images/09_buy_sell_actions.png)
+![Backtesting Signals](images/09_buy_sell_signals.png)
 
 Das Diagramm zeigt, dass im Zeitverlauf deutlich mehr BUY- als SELL-Signale generiert werden, insbesondere in späteren Monaten. Dies deutet darauf hin, dass das LSTM-Modell überwiegend positive Markterwartungen erkennt und die Strategie gezielt auf Aufwärtsbewegungen ausgerichtet ist.
 
