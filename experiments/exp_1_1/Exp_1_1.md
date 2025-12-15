@@ -787,6 +787,15 @@ Das Setzen eines Orders folgt der gleichen Logik wie der Backtesting Algorithmus
 - Down-Phasen werden von dem Modell nicht erkannt und darum werden keine Sell-Signale gesendet
 
 
+#### Stündliche Performance
+
+![Stündliche Änderungen](images/09_changes_per_hour.png)
+
+- Stündlicher Verlust ist zu verzeichnen 
+
+### Paper trading vs Backtesting
+
+
 
 
 

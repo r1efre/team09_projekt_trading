@@ -156,11 +156,10 @@ plt.tight_layout()
 plt.show()
 
 
-# Zeitraumgrenzen (volle Stunden)
+
 start_cutoff = berlin_tz.localize(datetime(2025, 12, 15, 10, 0, 0))
 end_cutoff   = berlin_tz.localize(datetime(2025, 12, 15, 20, 0, 0))
 
-# 1) Equity DataFrame (Alpaca history -> Berlin-Zeit)
 equity_df = pd.DataFrame({
     "timestamp": [
         datetime.fromtimestamp(ts, tz=pytz.UTC).astimezone(berlin_tz)
@@ -169,12 +168,9 @@ equity_df = pd.DataFrame({
     "equity": [float(e) for e in history.equity],
 }).set_index("timestamp").sort_index()
 
-# 2) Auf Zeitraum begrenzen
+
 equity_df = equity_df.loc[start_cutoff:end_cutoff]
 
-# 3) "Volle Stunden" erzwingen:
-#    - Wir mappen jeden Timestamp auf die Stundenmarke (z.B. 10:34 -> 10:00)
-#    - und nehmen pro Stunde den ERSTEN Wert (nahe an der vollen Stunde)
 equity_full_hours = equity_df.copy()
 equity_full_hours["hour"] = equity_full_hours.index.floor("H")
 equity_full_hours = (
@@ -184,20 +180,16 @@ equity_full_hours = (
     .to_frame()
 )
 
-# Optional: sicherstellen, dass wirklich nur volle Stunden im Index sind
 equity_full_hours = equity_full_hours.loc[start_cutoff:end_cutoff]
 
-# 4) Änderungen von voller Stunde zu voller Stunde
 equity_full_hours["delta_$"]  = equity_full_hours["equity"].diff()
 equity_full_hours["return_%"] = equity_full_hours["equity"].pct_change() * 100
 
-# Für Durchschnitt: erste Zeile entfernen
 calc_df = equity_full_hours.dropna()
 
 avg_delta  = calc_df["delta_$"].mean()
 avg_return = calc_df["return_%"].mean()
 
-# 5) Ausgabe formatieren
 table = equity_full_hours.copy()
 table.index = table.index.strftime("%d.%m.%Y %H:%M")
 
