@@ -366,21 +366,21 @@ if getattr(trades_series.index, "tz", None) is not None:
 
 
 
-# Monthly count of BUY/SELL actions
+# Monthly count of BUY/SELL signals
 buy_per_month = (trades_series == "BUY").resample("ME").sum()
 sell_per_month = (trades_series == "SELL").resample("ME").sum()
 
 plt.figure(figsize=(12, 4))
 plt.plot(buy_per_month.index, buy_per_month.values, label="BUY-Anzahl")
 plt.plot(sell_per_month.index, sell_per_month.values, label="SELL-Anzahl")
-plt.title("BUY vs SELL-Aktionen im Zeitverlauf (monatlich)")
+plt.title("BUY vs SELL-Signalen im Zeitverlauf (monatlich)")
 plt.xlabel("Zeit")
 plt.ylabel("Anzahl")
 plt.grid(True)
 plt.legend()
 
 plt.tight_layout()
-plt.savefig("../../images/09_buy_sell_actions.png")
+plt.savefig("../../images/09_buy_sell_signals.png")
 plt.close()
 
 
@@ -448,10 +448,17 @@ plt.tight_layout()
 plt.savefig("../../images/09_price_actions.png")
 plt.close()
 
+# DataFrame with action_log
+actions_df = pd.DataFrame(action_log)
+actions_df["timestamp"] = pd.to_datetime(actions_df["timestamp"])
+actions_df = actions_df.set_index("timestamp")
+# BUY ADD as BUY
+actions_df["action"] = actions_df["action"].replace({"BUY_ADD": "BUY"})
 
 
 # Weekly count of BUY/SELL actions
-actions_per_week = trades_series.resample("W").size()
+actions_per_week = actions_df.resample("W").size()
+actions_per_week.index = actions_per_week.index.tz_localize(None)
 
 plt.figure(figsize=(12, 4))
 plt.bar(actions_per_week.index.astype(str), actions_per_week.values)
@@ -468,7 +475,12 @@ plt.close()
 
 
 # Count of BUY/SELL actions
-counts = trades_series.value_counts().reindex(["BUY", "SELL"]).fillna(0)
+counts = (
+    actions_df["action"]
+    .value_counts()
+    .reindex(["BUY", "SELL"])
+    .fillna(0)
+)
 
 plt.figure(figsize=(5, 4))
 plt.bar(
