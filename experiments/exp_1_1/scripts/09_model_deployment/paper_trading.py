@@ -250,7 +250,7 @@ def predict_signal(model, x_seq: np.ndarray):
 
     return predicted, prob_down, prob_hold, prob_up, diff
 
-def has_position(symbol="BTC/USD") -> bool:
+def has_position(symbol="BTCUSD") -> bool:
     try:
         trading_client.get_open_position(symbol)
         return True
@@ -269,7 +269,7 @@ def run_trading_step():
 
     print(f"Prediction: {predicted} | diff={diff:.2f}")
 
-    if predicted in [0, 2] and diff >= 3:
+    if predicted in [0, 2] and diff >= 5:
         account = trading_client.get_account()
         if account.trading_blocked:
             print("Account is currently restricted from trading.")
@@ -279,7 +279,7 @@ def run_trading_step():
             print("🟢 BUY signal")
             buying_power = float(trading_client.get_account().buying_power)
             if buying_power > 100:
-                notional = round(buying_power * (0.05 if has_position("BTC/USD") else 0.10),2)
+                notional = round(buying_power * (0.05 if has_position("BTCUSD") else 0.10),2)
                 place_order(OrderSide.BUY, notional=notional)
             else:
                 print("Not enough buying power.")
