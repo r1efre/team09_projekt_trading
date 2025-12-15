@@ -12,6 +12,7 @@
 - [Step 7 - Model Training](#step-7---model-training)
 - [Step 8 - Model Testing](#step-8---model-testing)
 - [Step 9 - Model Deployment](#step-9---deployment)
+- [Fazit und Next Steps](#fazit-und-next-steps)
 
 ---
 
