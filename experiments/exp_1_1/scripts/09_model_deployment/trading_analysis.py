@@ -1,4 +1,5 @@
 import yaml
+import pandas as pd
 import yfinance as yf
 import matplotlib.pyplot as plt
 from datetime import datetime, timezone, timedelta
@@ -153,3 +154,66 @@ plt.grid(True)
 plt.legend()
 plt.tight_layout()
 plt.show()
+
+
+# Zeitraumgrenzen (volle Stunden)
+start_cutoff = berlin_tz.localize(datetime(2025, 12, 15, 10, 0, 0))
+end_cutoff   = berlin_tz.localize(datetime(2025, 12, 15, 20, 0, 0))
+
+# 1) Equity DataFrame (Alpaca history -> Berlin-Zeit)
+equity_df = pd.DataFrame({
+    "timestamp": [
+        datetime.fromtimestamp(ts, tz=pytz.UTC).astimezone(berlin_tz)
+        for ts in history.timestamp
+    ],
+    "equity": [float(e) for e in history.equity],
+}).set_index("timestamp").sort_index()
+
+# 2) Auf Zeitraum begrenzen
+equity_df = equity_df.loc[start_cutoff:end_cutoff]
+
+# 3) "Volle Stunden" erzwingen:
+#    - Wir mappen jeden Timestamp auf die Stundenmarke (z.B. 10:34 -> 10:00)
+#    - und nehmen pro Stunde den ERSTEN Wert (nahe an der vollen Stunde)
+equity_full_hours = equity_df.copy()
+equity_full_hours["hour"] = equity_full_hours.index.floor("H")
+equity_full_hours = (
+    equity_full_hours
+    .groupby("hour")["equity"]
+    .first()
+    .to_frame()
+)
+
+# Optional: sicherstellen, dass wirklich nur volle Stunden im Index sind
+equity_full_hours = equity_full_hours.loc[start_cutoff:end_cutoff]
+
+# 4) Änderungen von voller Stunde zu voller Stunde
+equity_full_hours["delta_$"]  = equity_full_hours["equity"].diff()
+equity_full_hours["return_%"] = equity_full_hours["equity"].pct_change() * 100
+
+# Für Durchschnitt: erste Zeile entfernen
+calc_df = equity_full_hours.dropna()
+
+avg_delta  = calc_df["delta_$"].mean()
+avg_return = calc_df["return_%"].mean()
+
+# 5) Ausgabe formatieren
+table = equity_full_hours.copy()
+table.index = table.index.strftime("%d.%m.%Y %H:%M")
+
+table["equity_$"] = table["equity"].map(lambda v: f"{v:,.2f}")
+table["delta_$"]  = table["delta_$"].map(lambda v: "" if pd.isna(v) else f"{v:+,.2f}")
+table["return_%"] = table["return_%"].map(lambda v: "" if pd.isna(v) else f"{v:+.4f}%")
+
+display_table = table[["equity_$", "delta_$", "return_%"]]
+
+# 6) Print
+print("\nStündliche Entwicklung (volle Stunde -> volle Stunde) – 15.12.2025 10:00 bis 20:00 (Berlin):")
+print(display_table.to_string())
+
+print("\n" + "=" * 80)
+print("Durchschnittliche stündliche Entwicklung (ohne erste Stunde):")
+print(f"Ø Änderung pro Stunde:   ${avg_delta:+,.2f}")
+print(f"Ø Return pro Stunde:     {avg_return:+.4f}%")
+print("=" * 80)
+
