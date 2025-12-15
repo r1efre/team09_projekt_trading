@@ -635,8 +635,8 @@ Bedingungen:
 Entry Preis: Schlusskurs der aktuellen Stunde
 
 Entry Size: 
-- erster Einstieg = 10% des Eigenkapitals
-- nachfolgende Einstiege = 5% des Eigenkapitals
+- erster Einstieg = 10% der vorhandenen buying power
+- nachfolgende Einstiege = 5% der vorhandenen buying power
 
 *Exit Point*
 
@@ -734,5 +734,37 @@ Obwohl im zugrunde liegenden Datensatz insgesamt mehr DOWN-Signale vom Modell er
 Der Bitcoin-Preis zeigt im Zeitverlauf starke Schwankungen mit ausgeprägten Auf- und Abwärtsbewegungen. Die Equity-Kurve folgt dem allgemeinen Markttrend, verläuft jedoch deutlich glatter und mit geringerer Volatilität. 
 In Phasen steigender Preise wächst auch das Portfolio, während Rückgänge des Marktes zu temporären, aber begrenzten Rücksetzern der Equity führen. Beide Kurven entwickeln sich grundsätzlich in die gleiche Richtung, jedoch mit unterschiedlicher Dynamik. 
 Während der Markt stark schwankt, wächst das Kapital kontrollierter. 
+
+
+## Paper trading
+
+**Script**
+
+[scripts/09_model_deployment/backtesting.py](scripts/09_model_deployment/paper_trading.py)
+
+### Aufsetzen von Paper trading
+
+![Paper trading](images/paper_trading.png)
+
+Data acquisition:
+- Nutzung der yfinance API
+- Verwendung der letzten 120 Stunden, um ausreichend Daten zu haben, um Features wie RSI und EMA zu berechnen
+
+Feature Berechnung, Skalierung, Drop selected features:
+- Nutzung der bereits fertigen Methode zur Berechnung der Features -> Pre-Split Preparation
+- Nutzung des bereits gefitteten StandardScalers für die Skalierung -> Post-Split Preparation
+- Löschung der Features, die bei der feature selection als redundant festgestellt wurden
+
+Nutzung des LSTM-Modells:
+- Die letzten sechs Stunden, die von der API zurückgegeben wurden, werden als Sequenz in das LSTM-Modell gegeben 
+- Sechs Stunden entsprechen der zuvor verwendeten Sequenzlänge 
+- Die gespeicherten Modellgewichte werden für die Vorhersage verwendet
+- Der vorhergesagte Trend bezieht sich darauf, wie sich der Bitcoin Close Preis von Stunde 6 bis zur Stunde 7 entwickeln wird
+
+Das Setzen eines Orders folgt der gleichen Logik wie der Backtesting Algorithmus.
+
+
+
+
 
 
