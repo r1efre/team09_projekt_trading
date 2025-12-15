@@ -682,7 +682,6 @@ Zentrale Kennzahlen:
 - Anzahl Trades-Signalen: 416
 - Anzahl BUY-Orders: 253
 - Anzahl SELL-Orders: 15
-- 
 
 Die Strategie erzielt im betrachteten Zeitraum eine stetig positive Gesamtperformance bei hoher Handelsaktivität.
 
@@ -711,7 +710,8 @@ Konkret wird das Zeitfenster gewählt, in dem die höchste Dichte an BUY- und SE
 
 ![Backtesting BTC-Preisverlauf mit Signalen](images/09_price_actions.png)
 
-Der Graph zeigt, dass BUY-Signale überwiegend in Phasen fallender oder konsolidierender Preise auftreten, während SELL-Signale vor allem nach kurzfristigen Aufwärtsbewegungen gesetzt werden. Die Signale sind dabei nicht zufällig verteilt, sondern folgen erkennbaren Preisbewegungen.
+Der Graph zeigt, dass BUY-Signale überwiegend in Phasen fallender oder konsolidierender Preise auftreten, während SELL-Signale vor allem nach kurzfristigen Aufwärtsbewegungen gesetzt werden. 
+Dabei ist zu sehen, dass das Modell nicht immer richtig liegt und auch Fehlsignale generiert. Beispielsweise fällt der Preis zwischen Anfang und Mitte November kontinuierlich, aber das Modell sendet BUY-Signale.
 
 *4) Wöchentliche Handelsaktivität der Strategie*
 
@@ -725,7 +725,7 @@ Die ungleichmäßige Verteilung der Trades deutet darauf hin, dass die Strategie
 ![Gesamtverteilung der BUY- und SELL-Aktionen](images/09_buy_vs_sell.png)
 
 Der Graph zeigt, dass die Anzahl der BUY-Aktionen deutlich höher ist als die Anzahl der SELL-Aktionen. Dies weist darauf hin, dass die Strategie häufiger Positionen eröffnet bzw. aufstockt, während Positionsschließungen seltener erfolgen.
-Obwohl im zugrunde liegenden Datensatz insgesamt mehr DOWN-Signale vom Modell erkannt werden, führen diese nicht automatisch zu SELL-Aktionen. Ein SELL wird nur dann ausgeführt, wenn tatsächlich eine offene Position existiert. DOWN-Signale ohne bestehende Position bleiben daher ohne Handelsaktion, was die höhere Anzahl an BUY-Aktionen im Vergleich zu SELL-Aktionen erklärt.
+Ein SELL wird nur dann ausgeführt, wenn tatsächlich eine offene Position existiert. DOWN-Signale ohne bestehende Position bleiben daher ohne Handelsaktion, was die höhere Anzahl an BUY-Aktionen im Vergleich zu SELL-Aktionen erklärt.
 
 *6) Vergleich von Bitcoin-Preis und Portfolioentwicklung*
 
