@@ -75,6 +75,10 @@ def calculate_equity(row_index, positions, account):
     equity = account + position_value
     return equity
 
+# Erfassung der Transaktionsrendite
+trade_log = []
+# Erfassung der Aktionen BUY/SELL
+action_log = []
 
 def setOrder(predicted, row_index, account, positions, timestamp):
     current_price = x_test.loc[row_index, 'close']
@@ -93,6 +97,11 @@ def setOrder(predicted, row_index, account, positions, timestamp):
                 'shares': shares,
                 'position_size': position_size,
                 'buys': 1  # Anzahl Käufe tracken
+            })
+
+            action_log.append({
+                "timestamp": timestamp,
+                "action": "BUY"
             })
 
             print(f"🟢 BUY (Initial) at {row_index}")
@@ -116,6 +125,11 @@ def setOrder(predicted, row_index, account, positions, timestamp):
             position['position_size'] = total_investment
             position['buys'] += 1
 
+            action_log.append({
+                "timestamp": timestamp,
+                "action": "BUY_ADD"
+            })
+
             print(f"🟢 BUY (Add-on #{position['buys']}) at {row_index}")
             print(f"   Price: ${current_price:.2f}")
             print(f"   Additional Shares: {additional_shares:.4f}")
@@ -128,11 +142,29 @@ def setOrder(predicted, row_index, account, positions, timestamp):
             entry_price = position['entry_price']
             shares = position['shares']
 
+            action_log.append({
+                "timestamp": timestamp,
+                "action": "SELL"
+            })
+
             # Gewinn/Verlust berechnen
             exit_value = shares * current_price
             entry_value = position['position_size']
             profit = exit_value - entry_value
             profit_pct = (profit / entry_value) * 100
+
+            trade_log.append({
+                "timestamp": timestamp,
+                "type": "SELL",
+                "entry_index": position["entry_index"],
+                "exit_index": row_index,
+                "entry_price": entry_price,
+                "exit_price": current_price,
+                "entry_value": entry_value,
+                "exit_value": exit_value,
+                "profit": profit,
+                "profit_pct": profit_pct
+            })
 
             # Kapital updaten
             account += exit_value
@@ -201,6 +233,91 @@ equity_series = pd.Series(
     index=pd.to_datetime(equity_timestamps)
 ).sort_index()
 
+# Durchschnittliche Anzahl der Transaktionen und durchschnittliche Rendite für x Stunden
+def trades_stats_by_hours(trade_log, hours=24):
+
+    if len(trade_log) == 0:
+        return None, {"hours": hours, "avg_trades_per_bin": 0.0, "avg_trade_return_pct_per_bin": None}
+
+    df = pd.DataFrame(trade_log)
+    df["timestamp"] = pd.to_datetime(df["timestamp"])
+    df = df.sort_values("timestamp").set_index("timestamp")
+
+    rule = f"{int(hours)}h"
+
+    # Anzahl der abgeschlossenen Transaktionen in jedem Fenster
+    trades_per_bin = df["profit_pct"].resample(rule).count().rename("trades_count")
+
+    # Durchschnittliche Rendite der Transaktionen (in %) in jedem Fenster
+    avg_return_per_bin = df["profit_pct"].resample(rule).mean().rename("avg_profit_pct")
+
+    df_bins = pd.concat([trades_per_bin, avg_return_per_bin], axis=1)
+
+    summary = {
+        "hours": hours,
+        "avg_trades_per_bin": df_bins["trades_count"].mean(),
+        "avg_trade_return_pct_per_bin": df_bins["avg_profit_pct"].mean(),
+        "total_trades": int(df_bins["trades_count"].sum())
+    }
+    return df_bins, summary
+
+
+# Anzahl BUY/SELL nach Fenstern X Stunden
+def buy_sell_activity_by_hours(action_log, hours=12, count_buy_add_as_buy=True):
+
+    if len(action_log) == 0:
+        return None, {
+            "window_hours": hours,
+            "avg_buys_per_window": 0.0,
+            "avg_sells_per_window": 0.0,
+            "total_buys": 0,
+            "total_sells": 0
+        }
+
+    df = pd.DataFrame(action_log)
+    df["timestamp"] = pd.to_datetime(df["timestamp"])
+    df = df.sort_values("timestamp").set_index("timestamp")
+
+    if count_buy_add_as_buy:
+        df["action"] = df["action"].replace({"BUY_ADD": "BUY"})
+
+    rule = f"{int(hours)}h"
+
+    buy_count = (df["action"] == "BUY").resample(rule).sum().astype(int).rename("buy_count")
+    sell_count = (df["action"] == "SELL").resample(rule).sum().astype(int).rename("sell_count")
+
+    df_bins = pd.concat([buy_count, sell_count], axis=1)
+
+    summary = {
+        "window_hours": hours,
+        "avg_buys_per_window": df_bins["buy_count"].mean(),
+        "avg_sells_per_window": df_bins["sell_count"].mean(),
+        "total_buys": int(df_bins["buy_count"].sum()),
+        "total_sells": int(df_bins["sell_count"].sum()),
+    }
+
+    return df_bins, summary
+
+
+X_HOURS = 48  #  6, 12, 24, 48, ...
+
+df_bins, summary = trades_stats_by_hours(trade_log, hours=X_HOURS)
+
+print("\n--- Trade stats by window ---")
+print("Window (hours):", summary["hours"])
+print("Avg trades per window:", summary["avg_trades_per_bin"])
+print("Avg trade return per window (%):", summary["avg_trade_return_pct_per_bin"])
+
+
+df_act_bins, act_summary = buy_sell_activity_by_hours(action_log, hours=X_HOURS)
+
+print("\n--- Buy/Sell activity by window ---")
+print("Window (hours):", act_summary["window_hours"])
+print("Avg buys per window:", act_summary["avg_buys_per_window"])
+print("Avg sells per window:", act_summary["avg_sells_per_window"])
+
+
+
 # Overall performance metrics
 final_equity = equity_series.iloc[-1]
 initial_capital = 100000
@@ -211,10 +328,11 @@ relative_return = absolute_return / initial_capital * 100
 start_date = equity_series.index.min()
 end_date = equity_series.index.max()
 
+print("\n--- Overall performance metrics ---")
 print("Final capital:", final_equity)
 print("Absolute return:", absolute_return)
 print("Relative return (%):", relative_return)
-print("Trades:", trades_count)
+print("Trades (signals count):", trades_count)
 print(f"Period: {start_date} - {end_date}")
 
 
