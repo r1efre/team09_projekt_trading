@@ -740,7 +740,7 @@ Während der Markt stark schwankt, wächst das Kapital kontrollierter.
 
 **Script**
 
-[scripts/09_model_deployment/backtesting.py](scripts/09_model_deployment/paper_trading.py)
+[scripts/09_model_deployment/paper_trading.py](scripts/09_model_deployment/paper_trading.py)
 
 ### Aufsetzen von Paper trading
 
@@ -762,6 +762,32 @@ Nutzung des LSTM-Modells:
 - Der vorhergesagte Trend bezieht sich darauf, wie sich der Bitcoin Close Preis von Stunde 6 bis zur Stunde 7 entwickeln wird
 
 Das Setzen eines Orders folgt der gleichen Logik wie der Backtesting Algorithmus.
+
+### Paper trading performance
+
+*6) Equity Kurve Verlauf*
+
+![equity trading](images/09_equity_trading.png)
+
+- Betrachteter Zeitraum: 15.12.2025 10 Uhr bis 20 Uhr
+- zeigt insgesamt einen sinkenden Trend
+- Start Portfolio: $100,710.87
+- End Portfolio: $96,876.92 
+- Veränderung: $-3,833.95 (-3.81%)
+- getätigte Trades: 11
+- jede Stunde wurde ein Order gesetzt
+- es gab ausschließlich Buy Signale 
+
+*6) Close Bitcoin price vs trades*
+
+![Close vs trades](images/close_vs_trades.png)
+
+- Buy-Signale werden gesendet, obwohl der Bitcoin Preis in der nächsten Stunde sinkt
+- Buy-Signale sollten eigentlich vor einem Bitcoin Preis Anstieg gesendet werden
+- Down-Phasen werden von dem Modell nicht erkannt und darum werden keine Sell-Signale gesendet
+
+
+
 
 
 
