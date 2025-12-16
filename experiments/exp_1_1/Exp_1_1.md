@@ -777,7 +777,7 @@ Das Setzen eines Orders folgt der gleichen Logik wie der Backtesting Algorithmus
 - Start Portfolio: $100,710.87
 - End Portfolio: $96,876.92 
 - Veränderung: $-3,833.95 (-3.81%)
-- getätigte Trades: 10
+- getätigte Trades: 11
 - jede Stunde wurde ein Order gesetzt
 - es gab ausschließlich Buy Signale 
 
