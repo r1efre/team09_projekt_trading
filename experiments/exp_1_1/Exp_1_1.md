@@ -807,7 +807,7 @@ Da beim Paper Trading ein Zeitraum von 10 Fenstern betrachtet wird, werden in de
 | Verteilung Buy/Sell  | 100% Buy      | Buy-Signale überwiegen deutlich |
 | Equity               | $96,876.92    | $104,665.14                     |
 | Absolute Veränderung | $-3,833.95    | $+24.89                         |
-| Return               | +0.0248%      | -3.81%                          |
+| Return               | -3.81%        | +0.0248%                        |
 
 
 Der Vergleich zeigt, dass beim Paper Trading deutlich mehr Trading-Actions ausgeführt wurden als beim Backtesting. Dies lässt sich auf folgende Faktoren zurückführen:
