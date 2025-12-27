@@ -1,0 +1,11 @@
+btc_return_5min
+btc_return_30min
+btc_return_60min
+eth_return_5min
+eth_return_30min
+eth_return_60min
+eth_btc_ratio
+ema_15
+ema_60
+rsi
+atr

@@ -2,21 +2,19 @@ import pandas as pd
 import numpy as np
 
 def add_returns(df: pd.DataFrame, return_periods: list[int], features: list) -> tuple[pd.DataFrame, list[str]]:
-    """Fügt 1h- und 6h-Returns für BTC und ETH hinzu."""
     df = df.copy()
 
     for period in return_periods:
-        df[f'btc_return_{period}h'] = df["close"].pct_change(periods=period)
-        features.append(f'btc_return_{period}h')
+        df[f'btc_return_{period}min'] = df["close"].pct_change(periods=period)
+        features.append(f'btc_return_{period}min')
 
     for period in return_periods:
-        df[f'eth_return_{period}h'] = df["eth_close"].pct_change(periods=period)
-        features.append(f'eth_return_{period}h')
+        df[f'eth_return_{period}min'] = df["eth_close"].pct_change(periods=period)
+        features.append(f'eth_return_{period}min')
 
     return df, features
 
 def add_eth_btc_ratio(df: pd.DataFrame) -> pd.DataFrame:
-    """ETH/BTC Ratio als relative Stärke."""
     df = df.copy()
     df["eth_btc_ratio"] = df["eth_close"] / df["close"]
     return df
@@ -39,28 +37,28 @@ def add_rsi(df: pd.DataFrame, col: str, window: int) -> pd.DataFrame:
     gain = delta.clip(lower=0)
     loss = -delta.clip(upper=0)
 
-    avg_gain = gain.rolling(window=window, min_periods=1).mean()
-    avg_loss = loss.rolling(window=window, min_periods=1).mean()
+    avg_gain = gain.rolling(window=window, min_periods=window).mean()
+    avg_loss = loss.rolling(window=window, min_periods=window).mean()
 
     rs = avg_gain / avg_loss.replace(0, np.nan)
     df["rsi"] = 100 - (100 / (1 + rs))
     return df
 
-def add_atr(df: pd.DataFrame, window: int) -> pd.DataFrame:
+def add_atr(df: pd.DataFrame, window: int = 14) -> pd.DataFrame:
     df = df.copy()
 
     prev_close = df["close"].shift(1)
 
-    # True Range
-    true_range = np.maximum.reduce([
-        df["high"] - df["low"],
-        (df["high"] - prev_close).abs(),
-        (df["low"] - prev_close).abs()
+    tr = np.maximum.reduce([
+        (df["high"] - df["low"]).to_numpy(),
+        (df["high"] - prev_close).abs().to_numpy(),
+        (df["low"] - prev_close).abs().to_numpy()
     ])
 
-    # ATR
-    atr_abs = pd.Series(true_range).rolling(window=window, min_periods=1).mean()
-    df[f"atr_{window}"] = atr_abs / df["close"]
+    tr = pd.Series(tr, index=df.index)
+
+    atr_abs = tr.rolling(window=window, min_periods=window).mean()
+    df["atr"] = atr_abs / df["close"]
 
     return df
 
@@ -83,6 +81,6 @@ def generate_features(df: pd.DataFrame, return_periods: list[int], ema_periods: 
     features.append('rsi')
     # ATR
     df = add_atr(df, window=rsi_atr_window)
-    features.append('atr_24')
+    features.append('atr')
 
     return df, features
