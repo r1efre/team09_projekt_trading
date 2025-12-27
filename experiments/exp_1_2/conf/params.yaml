@@ -1,0 +1,7 @@
+DATA_ACQUISITION:
+  DATA_PATH: 'C:/5.Semester/Unternehmenssoftware/data2/raw'
+  START_DATE: '2024-01-01'
+  END_DATE: '2025-12-01'
+  SYMBOLS:
+    - 'BTCUSDT'
+    - 'ETHUSDT'
