@@ -44,3 +44,18 @@ Da nun minütliche und nicht stündliche Daten verwendet werden, werden die Zeit
 - RSI (Trendstärke-Indikator aus Preisänderungen) --> berechnet über die letzten 14 Perioden
 - ATR (Maß für die Volatilität des Marktes) --> berechent über die letzten 14 Perioden
 - Cross-Asset-Features anhand von Ethereum: ETH_Close, ETH_return_5min, ETH_return_30min, ETH_return_60min, ETH/BTC Ratio (relative Stärke zwischen ETH und BTC)
+
+## Step 1 - Data Acquisition
+
+Im Gegensatz zum ersten Experiment wird in diesem Experiment die Binance-API anstelle der Alpaca-API verwendet, da bei der Nutzung von Alpaca auf Minutenbasis wiederholt unvollständige Zeitreihen mit fehlenden Minuten festgestellt wurden.
+
+**Script**
+
+[scripts/01_data_acquisition/01_data_acquisition.py](scripts/01_data_acquisition/data_acquisition.py)
+
+
+Bar data example:
+
+![Datenübersicht](images/DatenUebersicht.png) 
+
+---

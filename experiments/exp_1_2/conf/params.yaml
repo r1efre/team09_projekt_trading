@@ -5,3 +5,9 @@ DATA_ACQUISITION:
   SYMBOLS:
     - 'BTCUSDT'
     - 'ETHUSDT'
+DATA_PREP:
+  PROCESSED_PATH: 'C:/5.Semester/Unternehmenssoftware/data2/processed'
+  RAW_DATA_FILE: 'dataMerged.parquet'
+  RETURN_PERIODS: [5, 30, 60]
+  EMA_PERIODS: [15, 60]
+  RSI_ATR_WINDOW: 14
