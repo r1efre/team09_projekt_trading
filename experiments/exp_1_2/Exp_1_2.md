@@ -2,7 +2,6 @@
 
 ## 📚 Table of Contents
 
-- [Ergebnisse erstes Experiment](#ergebnisse-erstes-experiment)
 - [Problem Definiton](#problem-definiton)
 - [Step 1 - Data Acquisition](#step-1---data-acquisition)
 - [Step 2 - Data Understanding](#step-2---data-Understanding)
@@ -14,10 +13,6 @@
 - [Step 8 - Model Testing](#step-8---model-testing)
 - [Step 9 - Model Deployment](#step-9---deployment)
 - [Fazit und Next Steps](#fazit-und-next-steps)
-
----
-
-### Ergebnisse erstes Experiment
 
 --- 
 
@@ -59,3 +54,5 @@ Bar data example:
 ![Datenübersicht](images/DatenUebersicht.png) 
 
 ---
+
+Bester Versuch

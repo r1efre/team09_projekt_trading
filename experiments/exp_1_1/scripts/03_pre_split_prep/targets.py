@@ -20,7 +20,7 @@ def classify_trend(row, vol_factor):
 
 
 
-def set_target(df: pd.DataFrame, vol_factor=0.1) -> pd.DataFrame:
+def set_target(df: pd.DataFrame, vol_factor=0.25) -> pd.DataFrame:
     df = df.copy()
 
     # Forward-Return aus return_1h

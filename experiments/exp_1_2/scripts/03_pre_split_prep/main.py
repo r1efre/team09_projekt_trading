@@ -81,7 +81,7 @@ if not os.path.exists("features.txt"):
             f.write(f"{feature}\n")
 
 
-desc = data_complete[["btc_return_5min", "btc_return_30min", "btc_return_60min", "btc_return_240min", "eth_return_5min", "eth_return_30min", "eth_return_60min", "eth_return_240min", "eth_btc_ratio", "ema_20", "ema_200", "rsi", "atr"]].describe()
+desc = data_complete[["btc_return_5min", "btc_return_15min", "btc_return_30min", "btc_return_60min", "btc_return_90min", "eth_return_5min", "eth_return_15min", "eth_return_30min", "eth_return_60min", "eth_return_90min", "eth_btc_ratio", "ema_20", "ema_200", "rsi", "atr"]].describe()
 print(desc.to_string())
 
 

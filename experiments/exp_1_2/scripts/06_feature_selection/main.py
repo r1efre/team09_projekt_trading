@@ -30,7 +30,7 @@ plt.show()
 
 # open, high, low, eth_close  löschen
 # Liste der zu entfernenden Spalten
-columns_to_drop = ['open', 'high', 'low', 'eth_close', 'eth_return_5min', 'eth_return_30min', 'eth_return_240min']
+columns_to_drop = ['open', 'high', 'low', 'eth_close', 'eth_return_5min', 'eth_return_15min', 'eth_return_60min', 'eth_return_90min']
 
 # Original-Daten bereinigen
 X_train = x_train.drop(columns=columns_to_drop, errors='ignore')

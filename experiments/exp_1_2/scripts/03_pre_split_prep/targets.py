@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 
-def set_target(df: pd.DataFrame, horizon: int = 60, threshold: float = 0.001) -> pd.DataFrame:
+def set_target(df: pd.DataFrame, horizon: int = 15, threshold: float = 0.001) -> pd.DataFrame:
     df = df.copy()
 
     future_return = df["close"].shift(-horizon) / df["close"] - 1

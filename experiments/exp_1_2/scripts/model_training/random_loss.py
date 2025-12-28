@@ -5,7 +5,7 @@ import numpy as np
 #Daten laden
 params = yaml.safe_load(open("../../conf/params.yaml"))
 processed_path = params['DATA_PREP']['PROCESSED_PATH']
-data = pd.read_parquet(f'{processed_path}/train.parquet')
+data = pd.read_parquet(f'{processed_path}/test.parquet')
 
 #Trend-Verteilung alle 2 Monate
 
