@@ -23,32 +23,39 @@ def add_ema(df: pd.DataFrame, col: str, ema_periods: list[int], features: list[s
     """EMA-Funktion"""
     df = df.copy()
     for period in ema_periods:
-        df[f'ema_{period}'] = df[col].ewm(span=period, adjust=False).mean()
+        # EMA berechnen
+        ema = df[col].ewm(span=period, adjust=False).mean()
+        # Normalisiert speichern
+        df[f'ema_{period}'] = ema / df['close']
         features.append(f'ema_{period}')
 
     return df, features
 
 
 def add_rsi(df: pd.DataFrame, col: str, window: int) -> pd.DataFrame:
-    """RSI auf Basis von Schlusskursen"""
+    """RSI nach Wilder's Smoothing Method"""
     df = df.copy()
     delta = df[col].diff()
 
     gain = delta.clip(lower=0)
     loss = -delta.clip(upper=0)
 
-    avg_gain = gain.rolling(window=window, min_periods=window).mean()
-    avg_loss = loss.rolling(window=window, min_periods=window).mean()
+    avg_gain = gain.ewm(alpha=1 / window, min_periods=window, adjust=False).mean()
+    avg_loss = loss.ewm(alpha=1 / window, min_periods=window, adjust=False).mean()
 
     rs = avg_gain / avg_loss.replace(0, np.nan)
     df["rsi"] = 100 - (100 / (1 + rs))
+
     return df
 
+
 def add_atr(df: pd.DataFrame, window: int = 14) -> pd.DataFrame:
+    """ATR nach Wilder's Smoothing Method"""
     df = df.copy()
 
     prev_close = df["close"].shift(1)
 
+    # True Range
     tr = np.maximum.reduce([
         (df["high"] - df["low"]).to_numpy(),
         (df["high"] - prev_close).abs().to_numpy(),
@@ -57,7 +64,10 @@ def add_atr(df: pd.DataFrame, window: int = 14) -> pd.DataFrame:
 
     tr = pd.Series(tr, index=df.index)
 
-    atr_abs = tr.rolling(window=window, min_periods=window).mean()
+    # Wilder's Smoothing
+    atr_abs = tr.ewm(alpha=1 / window, min_periods=window, adjust=False).mean()
+
+    # Normalisiert
     df["atr"] = atr_abs / df["close"]
 
     return df

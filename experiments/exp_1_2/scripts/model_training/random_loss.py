@@ -5,12 +5,12 @@ import numpy as np
 #Daten laden
 params = yaml.safe_load(open("../../conf/params.yaml"))
 processed_path = params['DATA_PREP']['PROCESSED_PATH']
-data = pd.read_parquet(f'{processed_path}/validation.parquet')
+data = pd.read_parquet(f'{processed_path}/train.parquet')
 
 #Trend-Verteilung alle 2 Monate
 
 # Trend text labels
-label_map = {0: "DOWN", 1: "UP"}
+label_map = {0: "DOWN", 1: "NEUTRAL", 2: "UP"}
 data["trend_label"] = data["trend"].map(label_map)
 
 # Prozentanteil jeder Trendklasse am gesamten Datensatz

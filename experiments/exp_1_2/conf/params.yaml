@@ -8,8 +8,8 @@ DATA_ACQUISITION:
 DATA_PREP:
   PROCESSED_PATH: 'C:/5.Semester/Unternehmenssoftware/data2/processed'
   RAW_DATA_FILE: 'dataMerged.parquet'
-  RETURN_PERIODS: [5, 30, 60]
-  EMA_PERIODS: [15, 60]
+  RETURN_PERIODS: [5, 30, 60, 240]
+  EMA_PERIODS: [20, 200]
   RSI_ATR_WINDOW: 14
 SPLIT_DATA:
   TRAIN_DATE: '2025-05-01'
@@ -17,7 +17,7 @@ SPLIT_DATA:
 POST_SPLIT:
   SCALED_PATH: 'C:/5.Semester/Unternehmenssoftware/data2/scaled'
 MODELING:
-  SEQUENCE: 15
-  INPUT_SIZE: 13
+  SEQUENCE: 60
+  INPUT_SIZE: 12
   BATCH_SIZE: 120
   SAVE_MODEL: '../../model'

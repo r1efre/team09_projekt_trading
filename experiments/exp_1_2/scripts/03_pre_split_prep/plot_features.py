@@ -12,7 +12,7 @@ data = pd.read_parquet(f'{processed_path}/dataComplete.parquet')
 #Trend-Verteilung alle 2 Monate
 
 # Trend text labels
-label_map = {0: "DOWN", 1: "UP"}
+label_map = {0: "DOWN", 1: "NEUTRAL", 2: "UP"}
 data["trend_label"] = data["trend"].map(label_map)
 
 # 2-Monats-Periode erzeugen
@@ -38,7 +38,7 @@ trend_counts.plot(
 
 plt.title("Trend-Verteilung pro 2-Monats-Periode")
 plt.xlabel("2-Monats-Periode")
-plt.ylabel("Vorkommen")
+plt.ylabel("Anzahl der Stunden")
 plt.xticks(rotation=45)
 plt.grid(axis="y", alpha=0.4)
 
@@ -135,7 +135,7 @@ start = end - pd.Timedelta(days=30)
 df_period = df[(df["timestamp"] >= start) & (df["timestamp"] <= end)].copy()
 
 #EMA-Differenz berechnen
-df_period["ema_diff"] = df_period["ema_15"] - df_period["ema_60"]
+df_period["ema_diff"] = df_period["ema_20"] - df_period["ema_200"]
 
 # 3) Glättung definieren
 smooth_window = 100
@@ -150,11 +150,11 @@ fig, ax1 = plt.subplots(figsize=(14, 6))
 ax1.plot(
     df_period["timestamp"],
     df_period["ema_diff_smooth"],
-    label=f"EMA15 - EMA60 (geglättet, {smooth_window}h)",
+    label=f"EMA20 - EMA200 (geglättet, {smooth_window}h)",
     color="blue", linewidth=1.6
 )
 ax1.set_xlabel("Datum")
-ax1.set_ylabel("EMA15 - EMA60 (smooth)", color="blue")
+ax1.set_ylabel("EMA20 - EMA200 (smooth)", color="blue")
 ax1.tick_params(axis='y', labelcolor='blue')
 ax1.grid(True, linestyle="--", alpha=0.3)
 
@@ -171,7 +171,7 @@ ax2.set_ylabel("BTC Return 60min (smooth)", color="red")
 ax2.tick_params(axis='y', labelcolor='red')
 
 #Titel & kombinierte Legende
-plt.title(f"EMA15 - EMA60 vs. BTC 60min Return (geglättet, letzte 30 Tage)", fontsize=14)
+plt.title(f"EMA20 - EMA200 vs. BTC 60min Return (geglättet, letzte 30 Tage)", fontsize=14)
 lines1, labels1 = ax1.get_legend_handles_labels()
 lines2, labels2 = ax2.get_legend_handles_labels()
 plt.legend(lines1 + lines2, labels1 + labels2, loc="upper left")
