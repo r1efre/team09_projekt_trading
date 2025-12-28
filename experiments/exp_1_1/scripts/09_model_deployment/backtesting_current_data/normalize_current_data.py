@@ -6,12 +6,11 @@ import joblib
 # Laden der Projektparameter aus der Konfigurationsdatei
 params = yaml.safe_load(open("../../../conf/params.yaml", "r", encoding="utf-8"))
 
-# Input: vollständig vorbereiteter Datensatz
-# (aktuelle Daten für das Backtesting)
+# Input: vorbereiteter Datensatz für das aktuelle Backtesting
 processed_recent = params["BACKTESTING_RECENT"]["PROCESSED_PATH_RECENT"]
 data_complete_path = f"{processed_recent}/dataComplete_recent.parquet"
 
-# Output: Zielordner für die skalierten Testdaten
+# Output: Zielordner für die skalierten Backtesting-Daten
 scaled_recent = params["BACKTESTING_RECENT"]["SCALED_PATH_RECENT"]
 os.makedirs(scaled_recent, exist_ok=True)
 
@@ -23,51 +22,38 @@ scaler = joblib.load(scaler_path)
 df = pd.read_parquet(data_complete_path).copy()
 df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
 
-# Bestimmen der Feature-Liste aus dem Scaler
+# Spalten, die bei der Feature Selection entfernt wurden
+columns_to_drop = ["open", "high", "low", "vwap", "eth_close"]
+
+# Feature-Liste, mit der der Scaler trainiert wurde (18 Features)
 if not hasattr(scaler, "feature_names_in_"):
-    raise AttributeError(
-          "Der Scaler enthält keine Feature-Namen. "
-        "In diesem Fall muss die Feature-Liste manuell geprüft werden."
-    )
-feature_cols = list(scaler.feature_names_in_)
+    raise AttributeError("У scaler нет feature_names_in_.")
+scaler_features = list(scaler.feature_names_in_)
 
-# Sicherstellen, dass alle benötigten Features vorhanden sind
-missing = [c for c in feature_cols if c not in df.columns]
-if missing:
-    raise ValueError(
-        f"Im dataComplete fehlen folgende benötigte Features: {missing}"
-    )
+# Skalierung aller Features (wie beim Training)
+X_all = df[scaler_features].copy()
+X_all_scaled = pd.DataFrame(scaler.transform(X_all), columns=scaler_features)
 
-# Erzeugen der für das Backtesting benötigten Dateien
-base_cols = [c for c in ["open", "high", "low", "close", "volume"] if c in df.columns]
+# Entfernen der nicht selektierten Features
+X = X_all.drop(columns=columns_to_drop, errors="ignore")
+X_scaled = X_all_scaled.drop(columns=columns_to_drop, errors="ignore")
 
-x_test = df[base_cols].copy()
-
-# y_test: Zielvariable
+# Erzeugen der Zielvariable für das Backtesting
 y_test = df[["trend"]].copy()
 
-# index_map: Zuordnung von Zeilenindex zu Zeitstempel
+# Index-Mapping: Zuordnung von Zeile zu Zeitstempel
 x_test_index_map = pd.DataFrame({
     "row_id": range(len(df)),
     "timestamp": df["timestamp"].values
 })
 
-# Skalierung der Features (nur transform, kein Fit)
-X = df[feature_cols].copy()
-X_scaled = pd.DataFrame(scaler.transform(X), columns=feature_cols)
-
 # Einheitliche Indizes für alle Ausgabedaten
+X.index = range(len(df))
 X_scaled.index = range(len(df))
-x_test.index = X_scaled.index
-y_test.index = X_scaled.index
+y_test.index = range(len(df))
 
-# Speichern der Dateien für das Backtesting
-X_scaled.to_parquet(f"{scaled_recent}/x_test_scaled.parquet")
-x_test.to_parquet(f"{scaled_recent}/x_test.parquet")
-y_test.to_parquet(f"{scaled_recent}/y_test.parquet")
+# Speichern der finalen Backtesting-Dateien
+X.to_parquet(f"{scaled_recent}/x_test.parquet", index=False)
+X_scaled.to_parquet(f"{scaled_recent}/x_test_scaled.parquet", index=False)
+y_test.to_parquet(f"{scaled_recent}/y_test.parquet", index=False)
 x_test_index_map.to_parquet(f"{scaled_recent}/x_test_index_map.parquet", index=False)
-
-
-
-
-
