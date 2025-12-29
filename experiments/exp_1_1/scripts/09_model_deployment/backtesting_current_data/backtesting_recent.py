@@ -164,6 +164,7 @@ def setOrder(predicted, row_index, account, positions, timestamp):
             print(f"   Price: ${current_price:.2f}")
             print(f"   Additional Shares: {additional_shares:.4f}")
             print(f"   Total Shares: {position['shares']:.4f}")
+            print(f"   Account: {account:.4f}")
 
         equity_after = calculate_equity(row_index, positions, account)
         return account, equity_after

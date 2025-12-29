@@ -57,3 +57,4 @@ X.to_parquet(f"{scaled_recent}/x_test.parquet", index=False)
 X_scaled.to_parquet(f"{scaled_recent}/x_test_scaled.parquet", index=False)
 y_test.to_parquet(f"{scaled_recent}/y_test.parquet", index=False)
 x_test_index_map.to_parquet(f"{scaled_recent}/x_test_index_map.parquet", index=False)
+

@@ -827,6 +827,7 @@ Insgesamt kann man sagen, dass das Modell und die dazugehörige Trading-Strategi
 Allerding muss man beachten, dass beim Paper Trading nur ein einziges 10-Stunden Fenster betrachtet wurde und dies nicht repräsentativ ist, da es zufällig ein Tag sein kann, in dem, Bitcoin eher fällt.
 Für einen aussagekräftigen Vergleich muss man Paper Trading über einen längeren Zeitraum betrachten.
 
+
 ## Fazit und Next Steps
 
 Das Modell-Training und Testing hat gezeigt:
