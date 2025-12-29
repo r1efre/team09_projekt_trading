@@ -11,22 +11,30 @@ from BTCSequenceDataset import BTCSequenceDataset
 
 
 class Net(nn.Module):
-
     def __init__(self, input_size):
         super(Net, self).__init__()
-        self.layer_1 = nn.LSTM(input_size=input_size, hidden_size=16, batch_first=True)
-        self.dropout = nn.Dropout(0.3)
-        self.layer_2 = nn.Linear(16, 3)
+        # GRÖSSERE Hidden Sizes möglich!
+        self.layer_1 = nn.LSTM(input_size=input_size, hidden_size=128, batch_first=True)
+        self.dropout_1 = nn.Dropout(0.3)
+        self.layer_2 = nn.LSTM(input_size=128, hidden_size=64, batch_first=True)
+        self.dropout_2 = nn.Dropout(0.3)
 
-    # x hat die Form (batch_size, seq_len, input_size)
+        # Extra Dense Layers
+        self.layer_3 = nn.Linear(64, 32)
+        self.relu = nn.ReLU()
+        self.dropout_3 = nn.Dropout(0.3)
+        self.layer_4 = nn.Linear(32, 3)
+
     def forward(self, x):
-        # LSTM Layer 1
         out, _ = self.layer_1(x)
+        out = self.dropout_1(out)
+        out, _ = self.layer_2(out)
         out = out[:, -1, :]
-        out = self.dropout(out)
-
-        # Output Layer
-        out = self.layer_2(out)
+        out = self.dropout_2(out)
+        out = self.layer_3(out)
+        out = self.relu(out)
+        out = self.dropout_3(out)
+        out = self.layer_4(out)
         return out
 
 

@@ -9,7 +9,7 @@ DATA_PREP:
   PROCESSED_PATH: 'C:/5.Semester/Unternehmenssoftware/data2/processed'
   RAW_DATA_FILE: 'dataMerged.parquet'
   RETURN_PERIODS: [5, 15, 30, 60, 90]
-  EMA_PERIODS: [20, 200]
+  EMA_PERIODS: [20, 90]
   RSI_ATR_WINDOW: 14
 SPLIT_DATA:
   TRAIN_DATE: '2025-05-01'
@@ -19,4 +19,4 @@ POST_SPLIT:
 MODELING:
   SEQUENCE: 30
   INPUT_SIZE: 13
-  BATCH_SIZE: 256
+  BATCH_SIZE: 128
