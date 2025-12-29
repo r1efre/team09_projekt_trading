@@ -3,6 +3,7 @@ import yaml
 import torch
 import torch.nn as nn
 import pandas as pd
+import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 from experiments.exp_1_1.scripts.model_training.BTCSequenceDataset import BTCSequenceDataset
 
@@ -215,3 +216,93 @@ equity_series = pd.Series(equity_curve, index=pd.to_datetime(equity_timestamps))
 final_equity = float(equity_series.iloc[-1])
 
 
+# Overall performance metrics
+final_equity = equity_series.iloc[-1]
+initial_capital = 100000
+
+absolute_return = final_equity - initial_capital
+relative_return = absolute_return / initial_capital * 100
+
+start_date = equity_series.index.min()
+end_date = equity_series.index.max()
+
+print("\n--- Overall performance metrics ---")
+print("Final capital:", final_equity)
+print("Absolute return:", absolute_return)
+print("Relative return (%):", relative_return)
+print("Trades (signals count):", trades_count)
+print(f"Period: {start_date} - {end_date}")
+
+# Actions count (BUY/SELL)
+actions_df = pd.DataFrame(action_log)
+
+if actions_df.empty:
+    buy_count = 0
+    sell_count = 0
+    buy_add_count = 0
+else:
+    buy_count = int((actions_df["action"] == "BUY").sum())
+    buy_add_count = int((actions_df["action"] == "BUY_ADD").sum())
+    sell_count = int((actions_df["action"] == "SELL").sum())
+
+print("\n--- Actions count ---")
+print("BUY:", buy_count + buy_add_count)
+print("SELL:", sell_count)
+
+
+
+# Prepare action log
+actions_df = pd.DataFrame(action_log)
+actions_df["timestamp"] = pd.to_datetime(actions_df["timestamp"])
+
+# BUY- und SELL-Aktionen trennen
+buy_actions = actions_df[actions_df["action"].isin(["BUY", "BUY_ADD"])]
+sell_actions = actions_df[actions_df["action"] == "SELL"]
+
+# Zuordnung des Portfolio-Werts zum Zeitpunkt der Aktionen
+buy_equity = equity_series.reindex(buy_actions["timestamp"], method="nearest")
+sell_equity = equity_series.reindex(sell_actions["timestamp"], method="nearest")
+
+# Plot
+plt.figure(figsize=(14, 6))
+
+# Equity-Kurve
+plt.plot(equity_series.index, equity_series.values, label="Equity (Portfolio value)", linewidth=2)
+
+# Anfangskapital
+plt.axhline(
+    initial_capital,
+    linestyle="--",
+    linewidth=1,
+    label="Initial capital"
+)
+
+# BUY-Markierungen
+plt.scatter(
+    buy_equity.index,
+    buy_equity.values,
+    marker="^",
+    s=80,
+    label="BUY",
+    zorder=5
+)
+
+# SELL-Markierungen
+plt.scatter(
+    sell_equity.index,
+    sell_equity.values,
+    marker="v",
+    s=80,
+    label="SELL",
+    zorder=5
+)
+
+plt.title("Backtest Equity Kurve mit BUY- / SELL-Aktionen")
+plt.xlabel("Zeit")
+plt.ylabel("Kapital (USD)")
+plt.legend()
+plt.grid(True)
+
+plt.tight_layout()
+plt.savefig("../../../images/09_equity_curve_recent.png")
+plt.close()
