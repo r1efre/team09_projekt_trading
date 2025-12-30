@@ -126,3 +126,44 @@ Daraus lässt sich ableiten, dass die Marktbewegungen der vergangenen 30 Minuten
 ![BTC Return Korrelation 15min zeitversetzt](images/03_corr_btc_15min.png)
 
 Auch für die letzten 15 Minuten lässt sich keine signifikante Korrelation mit der Preisentwicklung in den folgenden 30 Minuten feststellen, was ebenfalls auf eine geringe kurzfristige Vorhersagbarkeit hinweist.
+
+---
+
+## Step 4 - Split Data
+
+**Script**
+
+[scripts/04_split_data/split.py](scripts/04_split_data/split.py)
+
+
+Die Daten werden aufgeteilt in:
+- Trainingsdaten (ca. 70% der Daten) - 2024-01-01 bis 2025-05-01
+- Validierungsdaten (ca. 20% der Daten) - 2025-05-02 bis 2025-09-15
+- Testdaten (ca. 10% der Daten) - 2025-09-16 bis 2025-11-30
+
+---
+
+## Step 5 - Post-Split Preparation
+
+Dieser Schritt entspricht exakt dem gleichen Schritt im ersten Experiment.
+
+---
+
+## Step 6 - Feature Selection
+
+**Script**
+
+[scripts/06_feature_selection/main.py](scripts/06_feature_selection/main.py)
+
+Wie im ersten Experiment werden aufgrund der starken Korrelationen folgende Features aus dem Datensatz gelöscht:
+- open
+- high
+- low
+- eth_close
+
+Des Weiteren zeigte sich, dass die verschiedenen Ethereum-Return-Features keinen zusätzlichen Mehrwert für das Modell liefern, da sie stark mit den entsprechenden Bitcoin-Returns korrelieren und somit keine zusätzliche Information beitragen.
+Aus diesem Grund werden auch folgende Features gelöscht:
+- eth_return_5min
+- eth_return_15min
+- eth_return_60min
+- eth_return_90min
