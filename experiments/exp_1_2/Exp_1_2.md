@@ -167,3 +167,97 @@ Aus diesem Grund werden auch folgende Features gelöscht:
 - eth_return_15min
 - eth_return_60min
 - eth_return_90min
+
+---
+
+## Step 7 - Model Training
+
+**Script**
+
+- [scripts/model_training/BTCSequenceDataset.py](scripts/model_training/BTCSequenceDataset.py)
+- [scripts/model_training/LSTM_Pytorch.py](scripts/model_training/LSTM_Pytorch.py)
+- [scripts/model_training/random_forest.py](scripts/model_training/random_forest.py)
+- [scripts/model_training/random_loss.py](scripts/model_training/random_loss.py)
+
+Auch im zweiten Experiment wird ein LSTM-Modell zur Vorhersage der Bitcoin-Trendrichtung eingesetzt. 
+Durch die Verwendung von minütlichen Daten steht nun eine deutlich größere Datenmenge zur Verfügung, wodurch der Einsatz einer tieferen und leistungsfähigeren Modellarchitektur möglich ist.
+
+Das Modell besteht aus zwei aufeinanderfolgenden LSTM-Schichten mit 128 bzw. 64 Hidden Units, die zeitliche Abhängigkeiten in den Sequenzdaten erfassen.
+Zur Reduktion von Overfitting werden nach jeder LSTM-Schicht Dropout-Layer eingesetzt.
+Die extrahierten zeitlichen Merkmale werden anschließend über zwei vollständig verbundene Dense-Schichten weiterverarbeitet, wobei eine ReLU-Aktivierungsfunktion zur Einführung von Nichtlinearitäten verwendet wird.
+Die finale Ausgabeschicht liefert die Klassenzugehörigkeit für drei Trendklassen (Up, Down, Neutral).
+
+### Benutzte Parameter
+
+| Parameter                 | Versuch 1          | Versuch 2        | Versuch 3        | Versuch 4        |
+|---------------------------|--------------------|------------------|------------------|------------------|
+| Anzahl der Layer          | 4                  | 3                | 5                | 2                | 
+| hidden_size               | 128, 64, 32        | 64, 32           | 128, 64, 32      | 16               |
+| Optimierungsalgorithmus   | SGD-Optimizer      | SGD-Optimizer    | SGD-Optimizer    | SGD-Optimizer    | 
+| LOSS Funktion             | CrossEntropyLoss   | CrossEntropyLoss | CrossEntropyLoss | CrossEntropyLoss | 
+| Sequence size             | 30                 | 30               | 30               | 20               | 
+| Batch size                | 128                | 128              | 128              | 128              | 
+| Dropout                   | 3 Mal je 0.3       | ein Mal 0.3      | 4 Mal je 0.3     | ein Mal 0.2      |  
+| Learning Rate             | 0.001              | 0.001            | 0.001            | 0.001            | 
+| Aktivierungsfunktion      | ReLu               | keine            | ReLu             | keine            |  
+| ------------------------- | ------------------ | ---------------  | ---------------  | ---------------  |  
+| Train Loss                | 1.0574             | 1.0554           | 1.0593           | 1.0570           |  
+| Val Loss                  | 1.0357             | 1.0370           | 1.0364           | 1.0374           |  
+| Accuracy                  | 0.462              | 0.462            | 0.464            | 0.463            | 
+| F1-macro                  | 0.397              | 0.398            | 0.389            | 0.391            | 
+| Recall-macro              | 0.411              | 0.412            | 0.409            | 0.409            | 
+
+Zur Bestimmung einer geeigneten Modellarchitektur wurden mehrere Experimente mit unterschiedlich tiefen LSTM-Architekturen durchgeführt. 
+Die Ergebnisse zeigen, dass tiefere Architekturen mit mehreren LSTM- und Dense-Schichten tendenziell bessere Leistungswerte erzielen als flachere Modelle, da sie komplexere zeitliche Muster in den Daten erfassen können.
+Auf Basis dieser Ergebnisse wurde die Modellarchitektur aus Versuch 1 gewählt, da sie bei vergleichbarer Loss- und Accuracy-Werten eine ausgewogene Balance zwischen Modellkomplexität und Stabilität bietet und insgesamt die besten Gesamtmetriken (u. a. F1- und Recall-Werte) liefert.
+
+*1.Versuch*
+
+![1.Versuch](images/val_train_loss.png)
+
+- In den ersten Epochen ist ein starker Abfall des Trainings- und Validierungs-Loss zu beobachten, was auf ein schnelles initiales Lernen des Modells hinweist.
+- Ab etwa Epoche 5 stabilisieren sich beide Loss-Kurven und zeigen nur noch geringe Verbesserungen.
+- Der Validierungs-Loss liegt durchgehend leicht unter dem Trainings-Loss, was auf eine stabile Generalisierung ohne starkes Overfitting hindeutet.
+
+### Baseline-Modell - Random Forest
+
+Als Baseline-Modell haben wir uns wie bereits beim ersten Experiment für das Random Forest Modell entschieden.
+Es wurde die gleiche Architektur wie beim ersten Experiment verwendet.
+
+| Parameter           | 
+|---------------------|
+| n_estimators=200    | 
+| max_depth=None      | 
+| min_samples_split=5 | 
+| min_samples_leaf=2  | 
+
+Als Ergebnis haben wir folgende Werte erhalten:
+
+| Merkmal      | Random Forest | LSTM  |
+|--------------|---------------|-------|
+| Accuracy     | 0.417         | 0.462 | 
+| F1-macro     | 0.386         | 0.397 |
+| Recall-macro | 0.402         | 0.411 |
+
+Das LSTM-Modell erzielt im Vergleich zum Random-Forest-Modell durchgängig bessere Ergebnisse in Accuracy, F1-macro und Recall-macro. 
+Insbesondere die höheren F1- und Recall-Werte zeigen, dass das LSTM die Klassen ausgewogener und robuster vorhersagt. 
+Insgesamt deutet der Vergleich darauf hin, dass das LSTM aufgrund seiner Fähigkeit, zeitliche Abhängigkeiten in den Sequenzdaten zu modellieren, besser für dieses Vorhersageproblem geeignet ist.
+
+### Vergleich mit dem ersten Experiment 
+
+| Parameter                             | Exp.1: LSTM | Exp.2: LSTM | Exp.1: Random Forest | Exp.2: Random Forest |
+|---------------------------------------|-------------|-------------|----------------------|----------------------|
+| Train Loss                            | 1.0702      | 1.0574      |                      |                      |  
+| Val Loss                              | 1.087       | 1.0357      |                      |                      |  
+| Accuracy                              | 0.397       | 0.462       | 0.355 (Diff: 0.042)  | 0.417 (Diff: 0.045)  | 
+| F1-macro                              | 0.324       | 0.397       | 0.351 (Diff: -0.027) | 0.386 (Diff: 0.011)  | 
+| Recall-macro                          | 0.377       | 0.411       | 0.360 (Diff: 0.017)  | 0.402 (Diff: 0.009)  | 
+| Shannon-Entropie (Validation)         | 1.096       | 1.078       |                      |                      |
+| Differenz Shannon Entropie & Val Loss | 0.009       | 0.0423      |                      |                      |
+
+Die Ergebnisse zeigen eine deutliche Verbesserung vom ersten zum zweiten Experiment sowohl für das LSTM- als auch für das Random-Forest-Modell. 
+Insbesondere beim LSTM sinken der Trainings- und Validierungs-Loss deutlich, während Accuracy, F1-macro und Recall-macro signifikant ansteigen, was auf eine bessere Modellanpassung und stabilere Klassifikation hinweist.
+Im Vergleich der beiden Experimente zeigt sich, dass die Differenz zwischen Shannon-Entropie und Validierungs-Loss im zweiten Experiment deutlich größer ausfällt als im ersten, was auf konzentriertere und weniger unsichere Modellvorhersagen hindeutet.
+
+Insgesamt zeigt der Vergleich, dass die im zweiten Experiment vorgenommenen Anpassungen (minütliche Daten, überarbeitete Feature- und Target-Definition) zu einer spürbaren Leistungssteigerung führen. 
+Besonders das LSTM profitiert von diesen Änderungen und bestätigt sich damit als geeigneteres Modell für die kurzfristige Vorhersage der Bitcoin-Trendrichtung.
