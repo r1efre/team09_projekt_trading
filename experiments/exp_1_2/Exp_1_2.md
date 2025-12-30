@@ -55,4 +55,74 @@ Bar data example:
 
 ---
 
-Bester Versuch
+## Step 2 - Data Understanding
+
+---
+
+## Step 3 - Data Preparation (Pre-Split)
+
+**Script**
+
+- [scripts/03_pre_split_prep/features.py](scripts/03_pre_split_prep/features.py)
+- [scripts/03_pre_split_prep/targets.py](scripts/03_pre_split_prep/targets.py)
+- [scripts/03_pre_split_prep/main.py](scripts/03_pre_split_prep/main.py)
+- [scripts/03_pre_split_prep/plot_features.py](scripts/03_pre_split_prep/plot_features.py)
+
+### Features Berechnung
+
+Da in diesem Experiment minütliche Kursdaten verwendet werden, wurde die Feature-Berechnung entsprechend auf kürzere Zeithorizonte angepasst. 
+Ziel dieser Umstellung ist es, kurzfristige Marktbewegungen und Dynamiken präziser abzubilden, die in stündlichen Aggregationen teilweise verloren gehen.
+
+Die neu gewählten Feature-Fenster sind:
+
+- Returns: 5, 15, 30, 60 und 90 Minuten -> wird für BTC und ETH berechnet
+- Exponential Moving Averages (EMA): 20 und 90 Minuten
+- Momentum & Volatilität: RSI und ATR mit einem Fenster von 14 Minuten
+
+Durch diese Feature-Auswahl werden sowohl sehr kurzfristige Preisänderungen (z. B. Momentum und Volatilität) als auch kurz- bis mittelfristige Trends erfasst. 
+Dies ist insbesondere für die Vorhersage der Bitcoin-Trendrichtung auf einem kurzfristigen Prognosehorizont vorteilhaft, da das Modell schneller auf neue Marktinformationen reagieren kann und feinere zeitliche Muster lernt.
+
+### Target Berechnung
+
+Die Berechnung des Target-Wertes wurde ebenfalls angepasst. Anstelle der Vorhersage der Bitcoin-Trendrichtung für die nächste Stunde (60 Minuten) wird nun der Trend für die kommenden 30 Minuten prognostiziert.
+Diese Anpassung ist sinnvoll, da sich innerhalb eines Zeitraums von einer Stunde starke Schwankungen und mehrere Richtungswechsel ergeben können, die eine eindeutige Trendzuordnung erschweren.
+Ein kürzerer Prognosehorizont von 30 Minuten reduziert diese Vermischung unterschiedlicher Marktbewegungen und ermöglicht eine klarere und konsistentere Definition des Zieltrends.
+
+Darüber hinaus wurde die Definition der Neutralzone angepasst. Ein Trend wird nun als neutral klassifiziert, wenn die Preisänderung von Bitcoin innerhalb von 30 Minuten unter 0,1 % liegt.
+Im ersten Experiment wurde ein Trend als neutral betrachtet, wenn die Preisänderung geringer als 25 % des ATR-Wertes war.
+
+### Visualisierung
+
+**Plots**
+
+*1) Trendverteilung des Bitcoin-Marktes im Zeitverlauf (2-Monats-Intervalle)*
+
+![Trend Verteilung](images/03_Trend_Verteilung_2Monate.png)
+
+Die Verteilung beträgt:
+
+- Neutral: 34.875580
+- UP: 32.995099
+- Down: 32.129321
+
+Auch hier sieht man, wie bereits beim ersten Experiment, dass alle Trendklassen ungefähr gleich verteilt sind über den gesamten Betrachtungszeitraum.
+
+*2) Zusammenhang zwischen BTC- und ETH-Returns*
+
+![BTC ETH Return Korrelation](images/03_corr_eth_btc.png)
+
+Es besteht weiterhin eine starke Korrelation zwischen den Return-Werten von Bitcoin und Ethereum.
+Wobei der Pearson-Koeffizient von 0.79 geringer ist als beim ersten Experiment wo dieser 0.83 betrug.
+
+*3) Rolling Lag-Korrelation zwischen BTC und BTC Returns (zeitversetzt um 30 Minuten)*
+
+![BTC Return Korrelation 30min zeitversetzt](images/03_corr_btc_30min.png)
+
+Es zeigt sich, dass keine signifikante Korrelation zwischen den aktuellen Bitcoin-Preisen und den Preisen vor 30 Minuten besteht. 
+Daraus lässt sich ableiten, dass die Marktbewegungen der vergangenen 30 Minuten nur eine geringe Aussagekraft für die Entwicklung der folgenden 30 Minuten besitzen.
+
+*4) Rolling Lag-Korrelation zwischen BTC und BTC Returns (zeitversetzt um 15 Minuten)*
+
+![BTC Return Korrelation 15min zeitversetzt](images/03_corr_btc_15min.png)
+
+Auch für die letzten 15 Minuten lässt sich keine signifikante Korrelation mit der Preisentwicklung in den folgenden 30 Minuten feststellen, was ebenfalls auf eine geringe kurzfristige Vorhersagbarkeit hinweist.
