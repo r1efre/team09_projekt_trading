@@ -15,7 +15,7 @@ params = yaml.safe_load(open("../../../conf/params.yaml"))
 PATH_BARS = params['BACKTESTING_RECENT']['DATA_PATH_RECENT']
 
 # Define time window for recent backtesting data
-start_date = datetime.strptime("2025-12-14 17:00:00", "%Y-%m-%d %H:%M:%S")
+start_date = datetime.strptime("2025-12-13 17:00:00", "%Y-%m-%d %H:%M:%S")
 end_date = datetime.strptime("2025-12-27", "%Y-%m-%d")
 
 # Initialize Alpaca historical crypto data client
