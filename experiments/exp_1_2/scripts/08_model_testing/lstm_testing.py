@@ -13,7 +13,6 @@ from experiments.exp_1_1.scripts.model_training.BTCSequenceDataset import BTCSeq
 class Net(nn.Module):
     def __init__(self, input_size):
         super(Net, self).__init__()
-        # GRÖSSERE Hidden Sizes möglich!
         self.layer_1 = nn.LSTM(input_size=input_size, hidden_size=128, batch_first=True)
         self.dropout_1 = nn.Dropout(0.3)
         self.layer_2 = nn.LSTM(input_size=128, hidden_size=64, batch_first=True)

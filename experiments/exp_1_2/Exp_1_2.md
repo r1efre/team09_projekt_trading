@@ -1,4 +1,4 @@
-# Team 09 - Projekt Trading
+# Team 09 - Projekt Trading - Zweites Experiment
 
 ## 📚 Table of Contents
 
@@ -316,3 +316,13 @@ Beim ersten Experiment konnte das Modell den Down-Trend nicht vorhersagen
 Der Vergleich der Testergebnisse zeigt, dass sowohl das Random-Forest- als auch das LSTM-Modell im zweiten Experiment deutlich bessere Leistungswerte erzielen als im ersten Experiment.
 In beiden Experimenten übertrifft das LSTM-Modell den Random Forest konsistent in allen betrachteten Metriken, wobei der Leistungsabstand weiterhin gering ausfällt.
 Insgesamt bestätigen die Ergebnisse, dass die Anpassungen im zweiten Experiment die Modellqualität signifikant steigern, wobei auch beim zweiten Experiment es keinen starken Unterschied zwischen Random Forest Modell und LSTM-Modell gibt.
+
+---
+
+## Step 9 - Deployment
+
+### Backtesting traidng algorithms
+
+**Script**
+
+[scripts/09_model_deployment/backtesting.py](scripts/09_model_deployment/backtesting.py)
