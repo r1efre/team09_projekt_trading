@@ -261,3 +261,58 @@ Im Vergleich der beiden Experimente zeigt sich, dass die Differenz zwischen Shan
 
 Insgesamt zeigt der Vergleich, dass die im zweiten Experiment vorgenommenen Anpassungen (minütliche Daten, überarbeitete Feature- und Target-Definition) zu einer spürbaren Leistungssteigerung führen. 
 Besonders das LSTM profitiert von diesen Änderungen und bestätigt sich damit als geeigneteres Modell für die kurzfristige Vorhersage der Bitcoin-Trendrichtung.
+
+---
+
+## Step 8 - Model Testing
+
+**Script**
+
+- [scripts/08_model_testing/lstm_testing.py](scripts/08_model_testing/lstm_testing.py)
+- [scripts/08_model_testing/random_forest_testing.py](scripts/08_model_testing/random_forest_testing.py)
+
+Das Testing erfolgt nach dem gleichen Prinzip wie im ersten Experiment. Dabei werden die besten Modellgewichte sowie die im ersten Trainingsversuch gewählte Modellarchitektur verwendet, um eine konsistente und vergleichbare Evaluation sicherzustellen.
+
+**Ergebnisse**
+
+| Merkmal                                | Exp.1: LSTM | Exp.2: LSTM |
+|----------------------------------------|-------------|-------------|
+| Accuracy                               | 0.3952      | 0.4446      |
+| F1-macro                               | 0.2863      | 0.4254      |
+| Recall-macro                           | 0.3651      | 0.4346      |
+| Test Loss                              | 1.0907      | 1.0403      |
+| Shannon-Entropie                       | 1.0948      | 1.0962      |
+| Differenz Shannon Entropie & Test Loss | 0.0041      | 0.0559      |
+
+Der Vergleich der Testergebnisse zeigt eine deutliche Verbesserung vom ersten zum zweiten Experiment. 
+Während im ersten Experiment nur moderate Werte für Accuracy, F1-macro und Recall-macro erzielt werden, steigen diese Metriken im zweiten Experiment spürbar an, bei gleichzeitig deutlich geringerem Test-Loss. 
+Dies deutet auf eine verbesserte Generalisierungsfähigkeit des Modells hin.
+
+Zudem vergrößert sich im zweiten Experiment die Differenz zwischen Shannon-Entropie und Test-Loss erheblich, was auf stabilere und weniger unsichere Vorhersagen im Testdatensatz schließen lässt. 
+Insgesamt bestätigen die Testergebnisse, dass die im zweiten Experiment vorgenommenen Anpassungen zu einem robusteren und leistungsfähigeren Modell führen.
+
+*Exp.2 Testing*
+
+![LSTM Testing](images/confusion_matrix_lstm.png)
+
+- Die Confusion Matrix zeigt, dass das LSTM-Modell im zweiten Experiment alle drei Klassen (DOWN, NEUTRAL, UP) aktiv vorhersagt, wobei insbesondere die Neutral-Klasse am häufigsten korrekt erkannt wird.
+- Im Vergleich zum ersten Experiment sagt das Modell nun deutlich häufiger die Klasse DOWN voraus, während diese im ersten Versuch nahezu gar nicht vorhergesagt wurde.
+- Gleichzeitig bestehen weiterhin Überschneidungen zwischen den Klassen, insbesondere zwischen UP und NEUTRAL, was auf die hohe Kurzfrist-Volatilität des Bitcoin-Marktes zurückzuführen ist.
+
+*Exp.1 Testing*
+
+![Exp.1 LSTM Testing](images/confusion_matrix_lstm1.png)
+
+Beim ersten Experiment konnte das Modell den Down-Trend nicht vorhersagen
+
+**Testing Random Forest**
+
+| Merkmal      | Exp.1: Random Forest | Exp.1: LSTM           | Exp.2: Random Forest | Exp.2: LSTM           |
+|--------------|----------------------|-----------------------|----------------------|-----------------------|
+| Accuracy     | 0.326                | 0.3952 (Diff: 0.0692) | 0.4099               | 0.4446 (Diff: 0.0347) |
+| F1-macro     | 0.273                | 0.2863 (Diff: 0.0133) | 0.4075               | 0.4254 (Diff: 0.0179) |
+| Recall-macro | 0.344                | 0.3651 (Diff: 0.0211) | 0.4087               | 0.4346 (Diff: 0.0259) |
+
+Der Vergleich der Testergebnisse zeigt, dass sowohl das Random-Forest- als auch das LSTM-Modell im zweiten Experiment deutlich bessere Leistungswerte erzielen als im ersten Experiment.
+In beiden Experimenten übertrifft das LSTM-Modell den Random Forest konsistent in allen betrachteten Metriken, wobei der Leistungsabstand weiterhin gering ausfällt.
+Insgesamt bestätigen die Ergebnisse, dass die Anpassungen im zweiten Experiment die Modellqualität signifikant steigern, wobei auch beim zweiten Experiment es keinen starken Unterschied zwischen Random Forest Modell und LSTM-Modell gibt.

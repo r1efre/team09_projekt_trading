@@ -10,7 +10,7 @@ from sklearn.metrics import accuracy_score, f1_score, recall_score
 #Daten laden
 params = yaml.safe_load(open("../../conf/params.yaml"))
 scaled_path = params['POST_SPLIT']['SCALED_PATH']
-ROOT_DIR = Path(__file__).resolve().parents[3]
+ROOT_DIR = Path(__file__).resolve().parents[2]
 # Modell-Verzeichnis
 model_dir = ROOT_DIR / "model"
 model_dir.mkdir(parents=True, exist_ok=True)
