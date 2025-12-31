@@ -161,7 +161,7 @@ def setBuyOrder(prob_up, row_index, account, positions, timestamp, buying_count)
     else:
         buy_pct = 0.05
 
-    if buying_count < 11:  # UP - KAUFEN
+    if buying_count < 21:  # UP - KAUFEN
         trades[timestamp] = "BUY"
         if len(positions) == 0:
             # Erste Position öffnen
@@ -243,31 +243,35 @@ with torch.no_grad():
             predicted = torch.argmax(probs[i]).item()
             diff = abs(prob_up - prob_down) * 100
             print(f"Diff: {diff:.2f}")
+            timestamp = mapping.loc[row_index, "timestamp"]
+            ts = pd.Timestamp(timestamp)
+            if ts.minute in (0, 15, 30, 45):
 
-            # Nur wenn Up oder Down predicted (nicht Hold)
-            if predicted == 2 and diff >= 1:  # 0=Down, 2=Up
-                print("---Model---")
-                timestamp = mapping.loc[row_index, "timestamp"]
-                equity_timestamps.append(timestamp)
-                account_model, equity, buying_count = setBuyOrder(prob_up, row_index, account_model, positions_model, timestamp, buying_count)
-                equity_curve.append(equity)
-                signals_count += 1
-                holding_count = 0
+                # Nur wenn Up oder Down predicted (nicht Hold)
+                if (predicted == 2 and diff >= 1) or (holding_count > 10 and prob_up > prob_down):  # 0=Down, 2=Up
+                    print("---Model---")
+                    equity_timestamps.append(timestamp)
+                    account_model, equity, buying_count = setBuyOrder(prob_up, row_index, account_model, positions_model, timestamp, buying_count)
+                    equity_curve.append(equity)
+                    signals_count += 1
+                    holding_count = 0
 
-            elif (predicted == 0 and diff >= 1) or holding_count > 15:
-                print("---Model---")
-                timestamp = mapping.loc[row_index, "timestamp"]
-                equity_timestamps.append(timestamp)
-                account_model, equity, buying_count = setSellOrder(row_index, account_model, positions_model,timestamp, buying_count)
-                equity_curve.append(equity)
-                holding_count = 0
+                elif (predicted == 0 and diff >= 1) or (holding_count > 10 and prob_up < prob_down):
+                    print("---Model---")
+                    equity_timestamps.append(timestamp)
+                    account_model, equity, buying_count = setSellOrder(row_index, account_model, positions_model,timestamp, buying_count)
+                    equity_curve.append(equity)
+                    holding_count = 0
 
+                else:
+                    print("---HOLD---")
+                    holding_count += 1
+                    equity = calculate_equity(row_index, positions_model, account_model)
+                    equity_curve.append(equity)
+                    equity_timestamps.append(timestamp)
             else:
-                print("---HOLD---")
-                holding_count += 1
                 equity = calculate_equity(row_index, positions_model, account_model)
                 equity_curve.append(equity)
-                timestamp = mapping.loc[row_index, "timestamp"]
                 equity_timestamps.append(timestamp)
 
 print("-----------------------------------------------")
