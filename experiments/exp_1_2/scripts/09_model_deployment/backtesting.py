@@ -154,12 +154,14 @@ def setBuyOrder(prob_up, row_index, account, positions, timestamp, buying_count)
 
     if prob_up >= 0.5:
         buy_pct = 0.2
+    elif prob_up >= 0.4:
+        buy_pct = 0.15
     elif prob_up >= 0.3:
         buy_pct = 0.1
     else:
         buy_pct = 0.05
 
-    if buying_count < 16:  # UP - KAUFEN
+    if buying_count < 11:  # UP - KAUFEN
         trades[timestamp] = "BUY"
         if len(positions) == 0:
             # Erste Position öffnen
