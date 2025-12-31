@@ -161,7 +161,7 @@ def setBuyOrder(up_count, row_index, account, positions, timestamp, buying_count
     else:
         buy_pct = 0.05
 
-    if buying_count < 16:  # UP - KAUFEN
+    if buying_count < 11:  # UP - KAUFEN
         trades[timestamp] = "BUY"
         if len(positions) == 0:
             # Erste Position öffnen

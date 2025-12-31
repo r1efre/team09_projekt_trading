@@ -329,6 +329,7 @@ Insgesamt bestätigen die Ergebnisse, dass die Anpassungen im zweiten Experiment
 
 Um die Performance des Trading-Bots zu verbessern, wurde die Handelsstrategie angepasst.
 Für das Backtesting wird der Zeitraum vom 2025-09-15 bis zum 30-11-2025 verwendet.
+Es wird eine Entscheidung zum Trading getroffen alle 15 Minuten jeweils in Minute [0,15,30,45].
 
 ### Entry and Exit Points
 
@@ -336,7 +337,7 @@ Für das Backtesting wird der Zeitraum vom 2025-09-15 bis zum 30-11-2025 verwend
 
 Bedingungen:
 - predicted class = UP
-- prob_up - prob_down >= 0.1
+- In den vergangenen 15 Minuten wurde der Trend UP am häufigsten vorhergesagt
 - entweder keine Position vorhanden oder Position bereits auf dem Markt
 - es wurde nicht mehr als 10 Mal hintereinander gekauft
 
@@ -344,20 +345,21 @@ Entry Preis: Schlusskurs der aktuellen Stunde
 
 Entry Size: 
 
-Die Größe des Kaufanteils richtet sich nach der vorhergesagten Wahrscheinlichkeit für das UP-Signal.
-- Wahrscheinlichkeit >= 50% -> Kauf für 20% der Buying power
-- Wahrscheinlichkeit >= 40% -> Kauf für 15% der Buying power
-- Wahrscheinlichkeit >= 30% -> Kauf für 10% der Buying power
-- Wahrscheinlichkeit unter 30% -> Kauf für 5% der Buying power
+Die Größe des Kaufanteils richtet sich nach dem Vorkommen des UP-Signals in den letzten 15 Minuten.
+- Vorkommen >= 12 -> Kauf für 20% der Buying power
+- Vorkommen >= 8 -> Kauf für 15% der Buying power
+- Vorkommen >= 5 -> Kauf für 10% der Buying power
+- Vorkommen unter 5 -> Kauf für 5% der Buying power
 
 *Exit Point*
 
 Bedingungen:
 - predicted class = DOWN
-- prob_down - prob_up >= 0.1
+- In den vergangenen 15 Minuten wurde der Trend Down am häufigsten vorhergesagt
 - Position vorhanden und auf dem Markt
 
-Die gesamte Position wird außerdem verkauft, wenn 15 Mal hintereinander ein HOLD-Signal kam. 
+Die gesamte Position wird außerdem verkauft, wenn 10 Mal hintereinander ein HOLD-Signal kam und es häufiger Down-Vorhersagen gab als Up-Vorhersagen.
+Ansonsten wird ein Buy-Signal gesendet. 
 
 Exit Preis: Schlusskurs der aktuellen Stunde
 
@@ -370,29 +372,30 @@ Exit Volumen: 100% der Position
 | Kennzahl               | Experiment 1 | Experiment 2 | Exp.1: BTC Close-Preis | Exp.2: BTC Close-Preis |
 |------------------------|--------------|--------------|------------------------|------------------------|
 | Startkapital           | 100 000,00   | 100 000,00   | 97 771,75              | 115 250, 01            |
-| Finales Kapital        | 110 531,63   | 105152,9     | 109 560,2              | 90 660, 45             |
-| Absoluter Gewinn       | +10 531,63   | +5152.8      | 11 788,45              | -24 589,56             |
-| Relative Rendite       | +10,53 %     | +5.15        | +12,06                 | -21,34                 |
-| Anzahl Trades-Signalen | 416          | 29056        |                        |                        |
+| Finales Kapital        | 110 531,63   | 100 569.68   | 109 560,2              | 90 660, 45             |
+| Absoluter Gewinn       | +10 531,63   | +569.68      | 11 788,45              | -24 589,56             |
+| Relative Rendite       | +10,53 %     | +0.57        | +12,06                 | -21,34                 |
+| Anzahl Trades-Signalen | 416          | 2247         |                        |                        |
 
 
 Die Backtesting-Ergebnisse zeigen, dass beide Experimente eine positive absolute und relative Rendite erzielen konnten, während sich der Bitcoin-Preis im gleichen Zeitraum sehr unterschiedlich entwickelte.
 Im ersten Experiment erwirtschaftet die Handelsstrategie eine Rendite von +10,53 %, was in etwa mit der Entwicklung des Bitcoin-Preises (+12,06 %) vergleichbar ist.
 Dies deutet darauf hin, dass die Strategie in einem überwiegend positiven Marktumfeld konkurrenzfähig ist, ohne jedoch signifikant über der reinen Buy-and-Hold-Strategie zu liegen.
 
-Im zweiten Experiment ergibt sich ein deutlich differenzierteres Bild: Während der Bitcoin-Preis im betrachteten Zeitraum stark fällt (−21,34 %), erzielt die Strategie dennoch eine positive Rendite von +5,15 %.
-Dies zeigt, dass das Modell in der Lage ist, Abwärtsphasen des Marktes teilweise zu vermeiden und das Kapital zu schützen.
+Im zweiten Experiment fällt die Rendite der Strategie mit +0,57 % deutlich geringer aus, bleibt jedoch positiv, obwohl der Bitcoin-Preis im gleichen Zeitraum einen starken Rückgang von −21,34 % verzeichnet.
+Trotz einer deutlich höheren Anzahl an 2 247 Trade-Signalen gelingt es dem Modell, größere Verluste zu vermeiden und das Kapital weitgehend zu erhalten.
+Dies weist darauf hin, dass die Strategie insbesondere in fallenden oder volatilen Marktphasen ihre Stärke in der Risikobegrenzung ausspielt
 
-Insgesamt verdeutlichen die Ergebnisse, dass die entwickelte LSTM-basierte Handelsstrategie insbesondere in volatilen und fallenden Marktphasen einen Mehrwert gegenüber einer passiven Bitcoin-Investition bietet.
+Zusammenfassend lässt sich festhalten, dass die entwickelte LSTM-basierte Handelsstrategie im ersten Experiment eine marktnahe Performance erzielt, während sie im zweiten Experiment ihre Fähigkeit unter Beweis stellt, sich von der negativen Marktentwicklung zu entkoppeln.
 
 *1) Vergleich von Bitcoin-Preis und Portfolioentwicklung*
 
 ![Wertvergleich](images/09_btc_price_equity_comparision_2.png)
 
-- Die Grafik zeigt eine klare Entkopplung zwischen dem Bitcoin-Preisverlauf und der Equity-Kurve, insbesondere in Phasen fallender Kurse.
-- Während der Bitcoin-Preis im betrachteten Zeitraum deutlich an Wert verliert, bleibt die Equity-Kurve vergleichsweise stabil und leicht steigend, was auf eine effektive Risikobegrenzung hinweist.
-- Kurzfristige Drawdowns der Equity sind sichtbar, fallen jedoch signifikant geringer aus als die Verluste des Bitcoin-Preises, was die Robustheit der Handelsstrategie unterstreicht.
-
+- Die Grafik zeigt, dass sich die Equity-Kurve zunehmend vom Bitcoin-Preisverlauf entkoppelt, insbesondere in Phasen starker Kursrückgänge.
+- Während der Bitcoin-Preis im betrachteten Zeitraum deutlich fällt, bleibt die Equity relativ stabil und weist insgesamt einen moderaten Anstieg auf, was auf eine wirksame Risikobegrenzung hindeutet.
+- Kurzfristige Drawdowns der Equity sind sichtbar, fallen jedoch wesentlich geringer aus als die Verluste des Bitcoin-Preises, was die Robustheit der Handelsstrategie unter volatilen Marktbedingungen unterstreicht.
+- 
 *2) Vergleich von Bitcoin-Preis und Portfolioentwicklung (1. Experiment)*
 
 ![Wertvergleich](images/09_btc_price_equity_comparision.png)
