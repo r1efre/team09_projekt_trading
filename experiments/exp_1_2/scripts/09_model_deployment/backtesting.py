@@ -81,6 +81,7 @@ signals_count = 0
 buying_count = 0
 trades = {}
 net_test.eval()
+holding_count = 0
 
 def calculate_equity(row_index, positions, account):
     current_price = x_test.loc[row_index, 'close']
@@ -97,10 +98,61 @@ trade_log = []
 # Erfassung der Aktionen BUY/SELL
 action_log = []
 
-def setOrder(predicted, row_index, account, positions, timestamp, buying_count):
+def setSellOrder(row_index, account, positions, timestamp, buying_count):
+    current_price = x_test.loc[row_index, 'close']
+    trades[timestamp] = "SELL"
+    if len(positions) > 0:  # Nur verkaufen wenn Position offen
+        position = positions[0]
+        entry_price = position['entry_price']
+        shares = position['shares']
+
+        action_log.append({
+                "timestamp": timestamp,
+                "action": "SELL"
+        })
+        buying_count = 0
+        # Gewinn/Verlust berechnen
+        exit_value = shares * current_price
+        position_size = position['position_size']
+        profit = exit_value - position_size
+        profit_pct = (profit / position_size) * 100
+
+        trade_log.append({
+            "timestamp": timestamp,
+            "type": "SELL",
+            "entry_index": position["entry_index"],
+            "exit_index": row_index,
+            "entry_price": entry_price,
+            "exit_price": current_price,
+            "position_size": position_size,
+            "exit_value": exit_value,
+            "profit": profit,
+            "profit_pct": profit_pct
+        })
+
+        # Kapital updaten
+        account += exit_value
+
+        print(f"🔴 SELL at {row_index}")
+        print(f"   Entry: ${entry_price:.2f} → Exit: ${current_price:.2f}")
+        print(f"   Shares: {shares:.4f}")
+        print(f"   Profit: ${profit:.2f} ({profit_pct:+.2f}%)")
+        print(f"   New Account: ${account:.2f}")
+
+        # Position schließen
+        positions.clear()
+
+    if len(positions) > 0:
+        position_value_after = positions[0]['shares'] * current_price
+    else:
+        position_value_after = 0.0
+    equity_after = account + position_value_after
+    return account, equity_after, buying_count
+
+def setBuyOrder(prob_up, row_index, account, positions, timestamp, buying_count):
     current_price = x_test.loc[row_index, 'close']
 
-    if predicted == 2 and buying_count < 16:  # UP - KAUFEN
+    if buying_count < 16:  # UP - KAUFEN
         trades[timestamp] = "BUY"
         if len(positions) == 0:
             # Erste Position öffnen
@@ -132,7 +184,7 @@ def setOrder(predicted, row_index, account, positions, timestamp, buying_count):
             # Position bereits offen - NACHKAUFEN
             position = positions[0]
 
-            additional_size = account * 0.1  # Nur 5% nachkaufen
+            additional_size = account * 0.10  # Nur 5% nachkaufen
             additional_shares = additional_size / current_price
             account = account - additional_size
 
@@ -156,51 +208,8 @@ def setOrder(predicted, row_index, account, positions, timestamp, buying_count):
             print(f"   Additional Shares: {additional_shares:.4f}")
             print(f"   Total Shares: {total_shares:.4f}")
 
-    elif predicted == 2 and buying_count > 15:
-        print("BUYING SIGNAL -- BUT BOUGHT ALREADY 3 TIMES")
-
-    elif predicted == 0:  # DOWN - VERKAUFEN
-        trades[timestamp] = "SELL"
-        if len(positions) > 0:  # Nur verkaufen wenn Position offen
-            position = positions[0]
-            entry_price = position['entry_price']
-            shares = position['shares']
-
-            action_log.append({
-                "timestamp": timestamp,
-                "action": "SELL"
-            })
-            buying_count = 0
-            # Gewinn/Verlust berechnen
-            exit_value = shares * current_price
-            position_size = position['position_size']
-            profit = exit_value - position_size
-            profit_pct = (profit / position_size) * 100
-
-            trade_log.append({
-                "timestamp": timestamp,
-                "type": "SELL",
-                "entry_index": position["entry_index"],
-                "exit_index": row_index,
-                "entry_price": entry_price,
-                "exit_price": current_price,
-                "position_size": position_size,
-                "exit_value": exit_value,
-                "profit": profit,
-                "profit_pct": profit_pct
-            })
-
-            # Kapital updaten
-            account += exit_value
-
-            print(f"🔴 SELL at {row_index}")
-            print(f"   Entry: ${entry_price:.2f} → Exit: ${current_price:.2f}")
-            print(f"   Shares: {shares:.4f}")
-            print(f"   Profit: ${profit:.2f} ({profit_pct:+.2f}%)")
-            print(f"   New Account: ${account:.2f}")
-
-            # Position schließen
-            positions.clear()
+    else:
+        print("BUYING SIGNAL -- BUT BOUGHT ALREADY 15 TIMES")
 
     if len(positions) > 0:
         position_value_after = positions[0]['shares'] * current_price
@@ -223,33 +232,34 @@ with torch.no_grad():
             prob_up = probs[i, 2].item()
 
             predicted = torch.argmax(probs[i]).item()
+            diff = abs(prob_up - prob_down) * 100
+            print(f"Diff: {diff:.2f}")
 
             # Nur wenn Up oder Down predicted (nicht Hold)
-            if predicted in [0, 2]:  # 0=Down, 2=Up
-                diff = abs(prob_up - prob_down) * 100
-                print(f"Diff: {diff:.2f}")
-                if diff >= 1:
-                    print("---Model---")
-                    timestamp = mapping.loc[row_index, "timestamp"]
-                    equity_timestamps.append(timestamp)
-                    account_model, equity, buying_count = setOrder(predicted, row_index, account_model, positions_model, timestamp, buying_count)
-                    equity_curve.append(equity)
-                    signals_count += 1
+            if predicted == 2 and diff >= 1:  # 0=Down, 2=Up
+                print("---Model---")
+                timestamp = mapping.loc[row_index, "timestamp"]
+                equity_timestamps.append(timestamp)
+                account_model, equity, buying_count = setBuyOrder(prob_up, row_index, account_model, positions_model, timestamp, buying_count)
+                equity_curve.append(equity)
+                signals_count += 1
+                holding_count = 0
 
-                else:
-                    print("---HOLD---")
-                    equity = calculate_equity(row_index, positions_model, account_model)
-                    equity_curve.append(equity)
-                    timestamp = mapping.loc[row_index, "timestamp"]
-                    equity_timestamps.append(timestamp)
+            elif (predicted == 0 and diff >= 1) or holding_count > 15:
+                print("---Model---")
+                timestamp = mapping.loc[row_index, "timestamp"]
+                equity_timestamps.append(timestamp)
+                account_model, equity, buying_count = setSellOrder(row_index, account_model, positions_model,timestamp, buying_count)
+                equity_curve.append(equity)
+                holding_count = 0
 
             else:
                 print("---HOLD---")
+                holding_count += 1
                 equity = calculate_equity(row_index, positions_model, account_model)
                 equity_curve.append(equity)
                 timestamp = mapping.loc[row_index, "timestamp"]
                 equity_timestamps.append(timestamp)
-
 
 print("-----------------------------------------------")
 print(f"   Account Model: {account_model:.4f}")
