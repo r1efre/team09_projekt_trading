@@ -152,11 +152,18 @@ def setSellOrder(row_index, account, positions, timestamp, buying_count):
 def setBuyOrder(prob_up, row_index, account, positions, timestamp, buying_count):
     current_price = x_test.loc[row_index, 'close']
 
+    if prob_up >= 0.5:
+        buy_pct = 0.2
+    elif prob_up >= 0.3:
+        buy_pct = 0.1
+    else:
+        buy_pct = 0.05
+
     if buying_count < 16:  # UP - KAUFEN
         trades[timestamp] = "BUY"
         if len(positions) == 0:
             # Erste Position öffnen
-            position_size = account * 0.20
+            position_size = account * buy_pct
             shares = position_size / current_price #wie viel Prozent vom Bitcoin Preis investiert man
             account = account - position_size
 
@@ -184,7 +191,7 @@ def setBuyOrder(prob_up, row_index, account, positions, timestamp, buying_count)
             # Position bereits offen - NACHKAUFEN
             position = positions[0]
 
-            additional_size = account * 0.10  # Nur 5% nachkaufen
+            additional_size = account * buy_pct  # Nur 5% nachkaufen
             additional_shares = additional_size / current_price
             account = account - additional_size
 
