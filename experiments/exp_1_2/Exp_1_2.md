@@ -329,8 +329,7 @@ Insgesamt bestätigen die Ergebnisse, dass die Anpassungen im zweiten Experiment
 
 Um die Performance des Trading-Bots zu verbessern, wurde die Handelsstrategie angepasst.
 Für das Backtesting wird der Zeitraum vom 2025-09-15 bis zum 30-11-2025 verwendet.
-Es wird eine Entscheidung zum Trading getroffen alle 15 Minuten jeweils in Minute [0,15,30,45].
-
+Es wird eine Entscheidung zum Trading getroffen alle 15 Minuten.
 ### Entry and Exit Points
 
 *Entry Point*
@@ -404,3 +403,32 @@ Zusammenfassend lässt sich festhalten, dass die entwickelte LSTM-basierte Hande
 - In Phasen steigender Bitcoin-Preise wächst die Equity zwar kontinuierlich, jedoch treten bei stärkeren Kursrückgängen spürbarere Drawdowns auf als im zweiten Experiment.
 - Im Vergleich zur zweiten Grafik zeigt das erste Experiment eine weniger ausgeprägte Risikobegrenzung, während die verbesserte Strategie im zweiten Experiment Verluste in volatilen und fallenden Marktphasen deutlich besser abfedern kann.
 
+
+### Paper trading
+
+**Script**
+
+[scripts/09_model_deployment/paper_trading.py](scripts/09_model_deployment/paper_trading.py)
+
+### Aufsetzen von Paper trading
+
+Das Paper-Trading-Setup basiert auf demselben Algorithmus wie im ersten Experiment.
+Es wurden jedoch gezielte Anpassungen vorgenommen, um die Handelslogik konsistent mit dem im Backtesting verwendeten Ansatz umzusetzen.
+
+Data acquisition:
+- Nutzung der Binance API
+- Daten werden einmal pro 15 Minuten geladen --> Trading Entscheidung wird alle 15 Minuten getroffen
+- Verwendung der letzten 200 Minuten, um ausreichend Daten zu haben, um Features wie EMA zu berechnen
+
+Feature Berechnung, Skalierung, Drop selected features:
+- Nutzung der bereits fertigen Methode zur Berechnung der Features -> Pre-Split Preparation
+- Nutzung des bereits gefitteten StandardScalers für die Skalierung -> Post-Split Preparation
+- Löschung der Features, die bei der feature selection als redundant festgestellt wurden
+
+Nutzung des LSTM-Modells:
+- Die letzten 30 Minuten, die von der API zurückgegeben wurden, werden als Sequenz in das LSTM-Modell gegeben 
+- 30 Minuten entsprechen der zuvor verwendeten Sequenzlänge 
+- Die gespeicherten Modellgewichte werden für die Vorhersage verwendet
+- Der vorhergesagte Trend bezieht sich darauf, wie sich der Bitcoin Close Preis in den nächsten 30 Minuten entwickeln wird
+
+Das Setzen eines Orders folgt der gleichen Logik wie der Backtesting Algorithmus.
