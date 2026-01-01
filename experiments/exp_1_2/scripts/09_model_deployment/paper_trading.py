@@ -23,8 +23,12 @@ scaler = joblib.load(SCALER_DIR / "scaler.joblib")
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 EXP_DIR = os.path.abspath(os.path.join(THIS_DIR, "..", ".."))
 FEATURES_PY_PATH = os.path.join(EXP_DIR, "scripts", "03_pre_split_prep", "features.py")
-params = yaml.safe_load(open("../../conf/params.yaml"))
-keys = yaml.safe_load(open("../../conf/keys.yaml"))
+
+CONF_DIR = BASE_DIR / "../../conf"
+CONF_DIR = CONF_DIR.resolve()
+
+params = yaml.safe_load(open(CONF_DIR / "params.yaml"))
+keys = yaml.safe_load(open(CONF_DIR / "keys.yaml"))
 
 spec = importlib.util.spec_from_file_location("features_module", FEATURES_PY_PATH)
 features_module = importlib.util.module_from_spec(spec) if spec else None
@@ -89,46 +93,69 @@ net_trade.eval()
 
 trading_client = TradingClient(api_key_id, api_secret, paper=True)
 
-def place_order(side, notional=None):
+def setBuyOrder(up_count, buying_count, buying_power):
 
-    if side == OrderSide.BUY:
+    if up_count >= 12:
+        buy_pct = 0.20
+    elif up_count >= 8:
+        buy_pct = 0.15
+    elif up_count >= 5:
+        buy_pct = 0.10
+    else:
+        buy_pct = 0.05
 
+    notional = round(buying_power * buy_pct, 2)
+    if buying_count < 11:  # UP - KAUFEN
         order_data = MarketOrderRequest(
             symbol="BTCUSD",
             notional=notional,
             side=OrderSide.BUY,
             time_in_force=TimeInForce.IOC
         )
+        buying_count += 1
+        print(f"🟢 BUY ORDER SET | buy_pct={buy_pct:.2f} | notional=${notional:.2f}")
 
-    elif side == OrderSide.SELL:
-        try:
-            position = trading_client.get_open_position("BTCUSD")
-        except Exception:
-            print("No open position to sell")
-            return None
+        order = trading_client.submit_order(order_data=order_data)
 
-        qty = float(position.qty)
-
-        if qty <= 0:
-            print("Position quantity is zero")
-            return None
-
-        order_data = MarketOrderRequest(
-            symbol="BTCUSD",
-            qty=qty,
-            side=OrderSide.SELL,
-            time_in_force=TimeInForce.IOC
-        )
+        return {
+            "status": order.status,
+            "id": order.id,
+            "side": "BUY",
+            "filled_qty": order.filled_qty,
+            "filled_avg_price": order.filled_avg_price
+        }, buying_count
 
     else:
-        raise ValueError("Invalid order side")
+        print("BUYING SIGNAL -- BUT BOUGHT ALREADY 10 TIMES")
+        return None, buying_count
+
+
+def setSellOrder():
+    try:
+        position = trading_client.get_open_position("BTCUSD")
+    except Exception:
+        print("No open position to sell")
+        return None
+
+    qty = float(position.qty)
+
+    if qty <= 0:
+        print("Position quantity is zero")
+        return None
+
+    order_data = MarketOrderRequest(
+        symbol="BTCUSD",
+        qty=qty,
+        side=OrderSide.SELL,
+        time_in_force=TimeInForce.IOC
+    )
 
     order = trading_client.submit_order(order_data=order_data)
-
+    print(f"🟢 SELL ORDER SET | selled={qty:.2f}")
     return {
         "status": order.status,
         "id": order.id,
-        "side": side.name,
+        "side": "SELL",
         "filled_qty": order.filled_qty,
         "filled_avg_price": order.filled_avg_price
     }
@@ -137,7 +164,7 @@ def place_order(side, notional=None):
 def download_and_merge_btc_eth(lookback: int) -> pd.DataFrame:
     client = Client(api_key=None, api_secret=None)
 
-    def download_binance_last_minutes(symbol, minutes=120):
+    def download_binance_last_minutes(symbol, minutes=lookback):
         klines = []
 
         end_date = datetime.now(timezone.utc)
@@ -212,76 +239,81 @@ def set_features(df):
     return pd.DataFrame(X, columns=X.columns)
 
 
-def predict_signal(model, x_seq: np.ndarray):
-    x_tensor = torch.tensor(x_seq, dtype=torch.float32).unsqueeze(0).to(DEVICE)
-
+def predict_signal(model, x_batch):
     with torch.no_grad():
-        outputs = model(x_tensor)
-        probs = torch.softmax(outputs, dim=1)[0]
-        print(probs)
+        outputs = model(x_batch)
+        probs = torch.softmax(outputs, dim=1)
+        preds = torch.argmax(probs, dim=1)
 
-    prob_down = probs[0].item()
-    prob_hold = probs[1].item()
-    prob_up = probs[2].item()
-    print("prob_down:", prob_down)
-    print("prob_hold:", prob_hold)
-    print("prob_up:", prob_up)
+    preds_list = preds.cpu().tolist()
+    down_count = preds_list.count(0)
+    hold_count = preds_list.count(1)
+    up_count = preds_list.count(2)
+    counts = {0: down_count, 1: hold_count, 2: up_count}
+    max_class = max(counts, key=counts.get)
+    print("Counts:", counts)
+    return max_class, counts
 
-    predicted = torch.argmax(probs).item()
-    diff = abs(prob_up - prob_down) * 100
-    print(diff)
 
-    return predicted, prob_down, prob_hold, prob_up, diff
-
-def has_position(symbol="BTCUSD") -> bool:
-    try:
-        trading_client.get_open_position(symbol)
-        return True
-    except Exception:
-        return False
-
-def run_trading_step():
-    raw_data = download_and_merge_btc_eth(lookback=120)
+def run_trading_step(holding_count, buying_count):
+    raw_data = download_and_merge_btc_eth(lookback=200)
     features_df = set_features(raw_data)
-    if len(features_df) < seq:
-        print("Not enough data for sequence yet")
+
+    # Wir brauchen: seq für das Fenster + 15 Endpunkte
+    needed = seq + 15 - 1
+    if len(features_df) < needed:
+        print(f"Not enough data yet. Need {needed}, have {len(features_df)}")
         return
 
-    # x_seq = features_df.tail(seq).values
-    # predicted, p_down, p_hold, p_up, diff = predict_signal(net_trade, x_seq)
-    #
-    # print(f"Prediction: {predicted} | diff={diff:.2f}")
-    #
-    # if predicted in [0, 2] and diff >= 5:
-    #     account = trading_client.get_account()
-    #     if account.trading_blocked:
-    #         print("Account is currently restricted from trading.")
-    #         return
-    #
-    #     if predicted == 2:
-    #         print("🟢 BUY signal")
-    #         buying_power = float(trading_client.get_account().buying_power)
-    #         if buying_power > 100:
-    #             notional = round(buying_power * (0.05 if has_position("BTCUSD") else 0.10),2)
-    #             place_order(OrderSide.BUY, notional=notional)
-    #         else:
-    #             print("Not enough buying power.")
-    #
-    #     elif predicted == 0:
-    #         print("🔴 SELL signal")
-    #         place_order(OrderSide.SELL)
-    #
-    # else:
-    #     print("⏸ HOLD")
+    # Letzte 15 Minuten -> End-Indizes
+    end_indices = range(len(features_df) - 15, len(features_df))  # 15 Stück
+
+    windows = []
+    for end_idx in end_indices:
+        start_idx = end_idx - seq + 1
+        x_window = features_df.iloc[start_idx:end_idx + 1].values  # (seq, n_features)
+        windows.append(x_window)
+
+    # Batch Tensor: (15, seq, n_features)
+    x_batch = torch.tensor(np.stack(windows), dtype=torch.float32).to(DEVICE)
+
+    max_class, counts = predict_signal(net_trade, x_batch)
+
+    if (max_class == 2) or (holding_count > 10 and counts[0] < counts[2]):  # 0=Down, 2=Up
+
+        account = trading_client.get_account()
+        if account.trading_blocked:
+            print("Account is currently restricted from trading.")
+            return
+
+        print("🟢 BUY signal")
+        buying_power = float(trading_client.get_account().cash)
+        if buying_power > 100:
+            order, buying_count = setBuyOrder(counts[2], buying_count, buying_power)
+            holding_count = 0
+        else:
+            print("Not enough buying power.")
 
 
+    elif (max_class == 0) or (holding_count > 10 and counts[0] > counts[2]):
+        print("🔴 SELL signal")
+        order = setSellOrder()
+        holding_count = 0
+        buying_count = 0
+
+    else:
+        print("---HOLD---")
+        holding_count += 1
+
+    return holding_count, buying_count
 
 # -----------------------------
 # Main flow
 # -----------------------------
 
 last_trade_slot = None
-
+holding_count = 0
+buying_count = 0
 while True:
     now = datetime.now(timezone.utc)
 
@@ -293,7 +325,7 @@ while True:
     if last_trade_slot != current_slot:
         last_trade_slot = current_slot
         print(f"\nRunning trading step at {now} (slot {current_slot})")
-        run_trading_step()
+        holding_count, buying_count = run_trading_step(holding_count, buying_count)
 
     time.sleep(30)
 
