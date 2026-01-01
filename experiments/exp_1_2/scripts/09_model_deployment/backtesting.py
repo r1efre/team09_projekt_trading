@@ -2,6 +2,7 @@ import yaml
 from pathlib import Path
 import torch
 import torch.nn as nn
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
@@ -149,15 +150,15 @@ def setSellOrder(row_index, account, positions, timestamp, buying_count):
     equity_after = account + position_value_after
     return account, equity_after, buying_count
 
-def setBuyOrder(up_count, row_index, account, positions, timestamp, buying_count):
+def setBuyOrder(prob_up, row_index, account, positions, timestamp, buying_count):
     current_price = x_test.loc[row_index, 'close']
 
-    if up_count >= 12:
-        buy_pct = 0.20
-    elif up_count >= 8:
+    if prob_up >= 0.5:
+        buy_pct = 0.2
+    elif prob_up >= 0.4:
         buy_pct = 0.15
-    elif up_count >= 5:
-        buy_pct = 0.10
+    elif prob_up >= 0.3:
+        buy_pct = 0.1
     else:
         buy_pct = 0.05
 
@@ -227,7 +228,10 @@ def setBuyOrder(up_count, row_index, account, positions, timestamp, buying_count
     equity_after = account + position_value_after
     return account, equity_after, buying_count
 
-predictions = []
+predictions_up = []
+predictions_hold = []
+predictions_down = []
+predictions = 0
 with torch.no_grad():
     for inputs, labels, indices in test_loader:
         outputs = net_test(inputs)
@@ -241,33 +245,41 @@ with torch.no_grad():
             prob_up = probs[i, 2].item()
 
             predicted = torch.argmax(probs[i]).item()
-            predictions.append(predicted)
+            predictions += 1
+            predictions_up.append(prob_up)
+            predictions_hold.append(prob_hold)
+            predictions_down.append(prob_down)
 
             timestamp = mapping.loc[row_index, "timestamp"]
             ts = pd.Timestamp(timestamp)
-            if len(predictions) == 15:
+            if predictions == 15:
 
-                down_count = predictions.count(0)
-                hold_count = predictions.count(1)
-                up_count = predictions.count(2)
-                counts = {
-                    0: down_count,
-                    1: hold_count,
-                    2: up_count
+                avg_prob_down = np.mean(predictions_down)
+                avg_prob_up = np.mean(predictions_up)
+                avg_prob_hold = np.mean(predictions_hold)
+
+                avg_probs = {
+                    0: avg_prob_down,
+                    1: avg_prob_hold,
+                    2: avg_prob_up
                 }
 
-                max_class = max(counts, key=counts.get)
-                predictions.clear()
+                max_class = max(avg_probs, key=avg_probs.get)
+
+                predictions_up.clear()
+                predictions_hold.clear()
+                predictions_down.clear()
+                predictions = 0
                 # Nur wenn Up oder Down predicted (nicht Hold)
-                if (max_class == 2) or (holding_count > 10 and down_count < up_count):  # 0=Down, 2=Up
+                if (max_class == 2) or (holding_count > 10 and avg_prob_down < avg_prob_up):  # 0=Down, 2=Up
                     print("---Model---")
                     equity_timestamps.append(timestamp)
-                    account_model, equity, buying_count = setBuyOrder(up_count, row_index, account_model, positions_model, timestamp, buying_count)
+                    account_model, equity, buying_count = setBuyOrder(avg_prob_up, row_index, account_model, positions_model, timestamp, buying_count)
                     equity_curve.append(equity)
                     signals_count += 1
                     holding_count = 0
 
-                elif (max_class == 0 ) or (holding_count > 10 and down_count > up_count):
+                elif (max_class == 0 ) or (holding_count > 10 and avg_prob_down > avg_prob_up):
                     print("---Model---")
                     equity_timestamps.append(timestamp)
                     account_model, equity, buying_count = setSellOrder(row_index, account_model, positions_model,timestamp, buying_count)
@@ -460,7 +472,6 @@ plt.grid(True)
 plt.legend()
 
 plt.tight_layout()
-plt.savefig("../../images/09_btc_price_equity_comparision.png")
-plt.close()
+plt.show()
 
 
