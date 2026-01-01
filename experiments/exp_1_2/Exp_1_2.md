@@ -390,7 +390,7 @@ Zusammenfassend lässt sich festhalten, dass die entwickelte LSTM-basierte Hande
 
 *1) Vergleich von Bitcoin-Preis und Portfolioentwicklung*
 
-![Wertvergleich](images/09_btc_price_equity_comparision_2.png)
+![Wertvergleich](images/09_btc_price_equity_comparision_1.png)
 
 - Die Grafik zeigt, dass sich die Equity-Kurve zunehmend vom Bitcoin-Preisverlauf entkoppelt, insbesondere in Phasen starker Kursrückgänge.
 - Während der Bitcoin-Preis im betrachteten Zeitraum deutlich fällt, bleibt die Equity relativ stabil und weist insgesamt einen moderaten Anstieg auf, was auf eine wirksame Risikobegrenzung hindeutet.
@@ -398,7 +398,7 @@ Zusammenfassend lässt sich festhalten, dass die entwickelte LSTM-basierte Hande
 - 
 *2) Vergleich von Bitcoin-Preis und Portfolioentwicklung (1. Experiment)*
 
-![Wertvergleich](images/09_btc_price_equity_comparision.png)
+![Wertvergleich](images/09_btc_price_equity_comparision_2.png)
 
 - Im ersten Experiment folgt die Equity-Kurve dem Bitcoin-Preisverlauf deutlich stärker als im zweiten Experiment, was auf eine geringere Fähigkeit zur Entkopplung vom Markt hindeutet.
 - In Phasen steigender Bitcoin-Preise wächst die Equity zwar kontinuierlich, jedoch treten bei stärkeren Kursrückgängen spürbarere Drawdowns auf als im zweiten Experiment.

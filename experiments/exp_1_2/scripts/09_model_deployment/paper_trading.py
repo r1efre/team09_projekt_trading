@@ -42,7 +42,9 @@ return_periods = params['DATA_PREP']['RETURN_PERIODS']
 rsi_atr_window = params['DATA_PREP']['RSI_ATR_WINDOW']
 
 #Data Model params
-model_path = params['MODELING']['SAVE_MODEL']
+ROOT_DIR = Path(__file__).resolve().parents[2]
+model_dir = ROOT_DIR / "model"
+model_dir.mkdir(parents=True, exist_ok=True)
 seq = params['MODELING']['SEQUENCE']
 input_size = params['MODELING']['INPUT_SIZE']
 
@@ -82,7 +84,7 @@ class Net(nn.Module):
 
 net_trade = Net(input_size).to(DEVICE)
 #Modellgewichte laden
-net_trade.load_state_dict(torch.load(f"{model_path}/best_model.pt"))
+net_trade.load_state_dict(torch.load(f"{model_dir}/best_model.pt"))
 net_trade.eval()
 
 trading_client = TradingClient(api_key_id, api_secret, paper=True)
@@ -245,32 +247,32 @@ def run_trading_step():
         print("Not enough data for sequence yet")
         return
 
-    x_seq = features_df.tail(seq).values
-    predicted, p_down, p_hold, p_up, diff = predict_signal(net_trade, x_seq)
-
-    print(f"Prediction: {predicted} | diff={diff:.2f}")
-
-    if predicted in [0, 2] and diff >= 5:
-        account = trading_client.get_account()
-        if account.trading_blocked:
-            print("Account is currently restricted from trading.")
-            return
-
-        if predicted == 2:
-            print("🟢 BUY signal")
-            buying_power = float(trading_client.get_account().buying_power)
-            if buying_power > 100:
-                notional = round(buying_power * (0.05 if has_position("BTCUSD") else 0.10),2)
-                place_order(OrderSide.BUY, notional=notional)
-            else:
-                print("Not enough buying power.")
-
-        elif predicted == 0:
-            print("🔴 SELL signal")
-            place_order(OrderSide.SELL)
-
-    else:
-        print("⏸ HOLD")
+    # x_seq = features_df.tail(seq).values
+    # predicted, p_down, p_hold, p_up, diff = predict_signal(net_trade, x_seq)
+    #
+    # print(f"Prediction: {predicted} | diff={diff:.2f}")
+    #
+    # if predicted in [0, 2] and diff >= 5:
+    #     account = trading_client.get_account()
+    #     if account.trading_blocked:
+    #         print("Account is currently restricted from trading.")
+    #         return
+    #
+    #     if predicted == 2:
+    #         print("🟢 BUY signal")
+    #         buying_power = float(trading_client.get_account().buying_power)
+    #         if buying_power > 100:
+    #             notional = round(buying_power * (0.05 if has_position("BTCUSD") else 0.10),2)
+    #             place_order(OrderSide.BUY, notional=notional)
+    #         else:
+    #             print("Not enough buying power.")
+    #
+    #     elif predicted == 0:
+    #         print("🔴 SELL signal")
+    #         place_order(OrderSide.SELL)
+    #
+    # else:
+    #     print("⏸ HOLD")
 
 
 
@@ -278,19 +280,20 @@ def run_trading_step():
 # Main flow
 # -----------------------------
 
-last_trade_hour = None
+last_trade_slot = None
 
 while True:
     now = datetime.now(timezone.utc)
 
-    # Slot auf 30-Minuten-Intervalle runden (00 oder 30)
-    minute_slot = 0 if now.minute < 30 else 30
+    # 15-Minuten-Slot bestimmen
+    minute_slot = (now.minute // 15) * 15
     current_slot = now.replace(minute=minute_slot, second=0, microsecond=0)
 
-    # Nur einmal pro Slot handeln, sobald wir im Slot sind
-    if last_trade_slot != current_slot and now.minute % 30 != 0:
+    # Nur einmal pro 15-Minuten-Slot ausführen
+    if last_trade_slot != current_slot:
         last_trade_slot = current_slot
-        print(f"\nRunning trading step at {now}")
+        print(f"\nRunning trading step at {now} (slot {current_slot})")
         run_trading_step()
 
     time.sleep(30)
+
