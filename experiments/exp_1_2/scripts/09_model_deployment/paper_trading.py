@@ -93,14 +93,14 @@ net_trade.eval()
 
 trading_client = TradingClient(api_key_id, api_secret, paper=True)
 
-def setBuyOrder(up_count, buying_count, buying_power):
+def setBuyOrder(prob_up, buying_count, buying_power):
 
-    if up_count >= 12:
-        buy_pct = 0.20
-    elif up_count >= 8:
+    if prob_up >= 0.5:
+        buy_pct = 0.2
+    elif prob_up >= 0.4:
         buy_pct = 0.15
-    elif up_count >= 5:
-        buy_pct = 0.10
+    elif prob_up >= 0.3:
+        buy_pct = 0.1
     else:
         buy_pct = 0.05
 
@@ -240,19 +240,28 @@ def set_features(df):
 
 
 def predict_signal(model, x_batch):
+
     with torch.no_grad():
         outputs = model(x_batch)
         probs = torch.softmax(outputs, dim=1)
         preds = torch.argmax(probs, dim=1)
 
-    preds_list = preds.cpu().tolist()
-    down_count = preds_list.count(0)
-    hold_count = preds_list.count(1)
-    up_count = preds_list.count(2)
-    counts = {0: down_count, 1: hold_count, 2: up_count}
-    max_class = max(counts, key=counts.get)
-    print("Counts:", counts)
-    return max_class, counts
+    # Durchschnittliche Wahrscheinlichkeiten
+    avg_prob_down = probs[:, 0].mean().item()
+    avg_prob_hold = probs[:, 1].mean().item()
+    avg_prob_up   = probs[:, 2].mean().item()
+
+    avg_probs = {
+        0: avg_prob_down,
+        1: avg_prob_hold,
+        2: avg_prob_up
+    }
+
+    # Finale Klasse anhand der durchschnittlichen Wahrscheinlichkeit
+    max_class = max(avg_probs, key=avg_probs.get)
+
+    return max_class, avg_probs
+
 
 
 def run_trading_step(holding_count, buying_count):
@@ -277,9 +286,9 @@ def run_trading_step(holding_count, buying_count):
     # Batch Tensor: (15, seq, n_features)
     x_batch = torch.tensor(np.stack(windows), dtype=torch.float32).to(DEVICE)
 
-    max_class, counts = predict_signal(net_trade, x_batch)
+    max_class, preds = predict_signal(net_trade, x_batch)
 
-    if (max_class == 2) or (holding_count > 10 and counts[0] < counts[2]):  # 0=Down, 2=Up
+    if (max_class == 2) or (holding_count > 10 and preds[0] < preds[2]):  # 0=Down, 2=Up
 
         account = trading_client.get_account()
         if account.trading_blocked:
@@ -289,13 +298,13 @@ def run_trading_step(holding_count, buying_count):
         print("🟢 BUY signal")
         buying_power = float(trading_client.get_account().cash)
         if buying_power > 100:
-            order, buying_count = setBuyOrder(counts[2], buying_count, buying_power)
+            order, buying_count = setBuyOrder(preds[2], buying_count, buying_power)
             holding_count = 0
         else:
             print("Not enough buying power.")
 
 
-    elif (max_class == 0) or (holding_count > 10 and counts[0] > counts[2]):
+    elif (max_class == 0) or (holding_count > 10 and preds[0] > preds[2]):
         print("🔴 SELL signal")
         order = setSellOrder()
         holding_count = 0
