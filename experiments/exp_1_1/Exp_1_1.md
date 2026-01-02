@@ -827,6 +827,45 @@ Insgesamt kann man sagen, dass das Modell und die dazugehörige Trading-Strategi
 Allerding muss man beachten, dass beim Paper Trading nur ein einziges 10-Stunden Fenster betrachtet wurde und dies nicht repräsentativ ist, da es zufällig ein Tag sein kann, in dem, Bitcoin eher fällt.
 Für einen aussagekräftigen Vergleich muss man Paper Trading über einen längeren Zeitraum betrachten.
 
+### Paper trading vs Backtesting Recent Data 
+
+**Script**
+
+[scripts/09_model_deployment/backtesting_current_data/data_acquisition.py](scripts/09_model_deployment/backtesting_current_data/data_acquisition.py)
+[scripts/09_model_deployment/backtesting_current_data/pre_prep_current_testset.py](scripts/09_model_deployment/backtesting_current_data/pre_prep_current_testset.py)
+[scripts/09_model_deployment/backtesting_current_data/normalize_current_data.py](scripts/09_model_deployment/backtesting_current_data/normalize_current_data.py)
+[scripts/09_model_deployment/backtesting_current_data/backtesting_recent.py](scripts/09_model_deployment/backtesting_current_data/backtesting_recent.py)
+
+Zur Validierung des Modells wurden neue stündliche Daten für den Zeitraum 14.12.2025, 22:00 Uhr – 26.12.2025, 23:00 Uhr verwendet.  
+Wir haben Daten aus der Alpaca-API gesammelt und für die Verwendung im Modell aufbereitet.
+
+*Backtesting Performance*
+
+Das Modell zeigte über den gesamten Zeitraum eine stabile Handelsaktivität:
+- Endkapital: 103.466,42 $
+- Rendite: +3,47 %
+- Anzahl der Signale: 42
+Verteilung der Aktionen:
+- BUY: 28
+- SELL: 3
+Übrige Schritte - keine Aktion (implizit neutral).
+
+![Backtesting_performance_new](images/09_equity_curve_recent.png)
+
+
+*Paper Trading Performance*
+
+- Der Handel wurde am 17. Dezember um 14:49 Uhr eingestellt.
+- Auf dem Konto verblieben 195,16 $
+- Danach wurden keine neuen Transaktionen mehr eröffnet
+- Alle aufgezeichneten Signale waren BUY
+- Es gab keine NEUTRAL-Signale, der Bot führte bis zum Stopp stündlich Aktionen durch
+
+Es gibt einen deutlichen Unterschied zwischen den Ergebnissen des Paper Trading und des Backtesting, obwohl Daten aus dem gleichen Zeitraum verwendet wurden. 
+Der Grund dafür ist wahrscheinlich, dass im Backtesting und im Paper Trading unterschiedliche Cash- und Buying-Power-Parameter verwendet wurden, was zu einem inkonsistenten Verhalten des Modells geführt haben könnte.
+Darüber hinaus deutet das Verhalten des Bots im Paper Trading eindeutig auf einen Fehler in der Umsetzung hin, da der Bot ausschließlich BUY-Signale generierte, keine NEUTRAL-Signale bildete und zu einem bestimmten Zeitpunkt den Handel vollständig einstellte, obwohl auf dem Konto freie Mittel vorhanden waren.
+
+
 
 ## Fazit und Next Steps
 
