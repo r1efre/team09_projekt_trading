@@ -844,10 +844,10 @@ Wir haben Daten aus der Alpaca-API gesammelt und für die Verwendung im Modell a
 Das Modell zeigte über den gesamten Zeitraum eine stabile Handelsaktivität:
 - Endkapital: 103.466,42 $
 - Rendite: +3,47 %
-- Anzahl der Signale: 42
-Verteilung der Aktionen:
-- BUY: 28
-- SELL: 3
+- Anzahl der Signale = 42 -> Verteilung der Aktionen:
+- BUY = 28
+- SELL = 3
+
 Übrige Schritte - keine Aktion (implizit neutral).
 
 ![Backtesting_performance_new](images/09_equity_curve_recent.png)
