@@ -365,6 +365,8 @@ Exit Preis: Schlusskurs der aktuellen Stunde
 
 Exit Volumen: 100% der Position 
 
+![Algorithmus](images/Algorithmus_Prozessbild_new.png)
+
 ### Overall Performance
 
 **Ergebnisse des Backtestings**
