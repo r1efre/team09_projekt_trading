@@ -57,6 +57,135 @@ Bar data example:
 
 ## Step 2 - Data Understanding
 
+Analyse historischer BTC-Preisdaten, um die Struktur, Eigenschaften und das Verhalten der Zeitreihe zu verstehen.
+Ziel ist es, wichtige statistische Abhängigkeiten, sich wiederholende Muster und Besonderheiten zu identifizieren, die die Auswahl der Merkmale und die Architektur des Modells beeinflussen.
+
+*Data Columns*
+
+| Column              | Description                                                           |
+|---------------------|-----------------------------------------------------------------------|
+| timestamp           | Zeitindex (UTC), abgeleitet aus der Close-Time der 1-Minuten-Kerzen.  |
+| open (float)        | Der BTC-Preis zu Beginn der jeweiligen Minute.                        |
+| high (float)        | Der höchste BTC-Preis, der innerhalb dieser Minute erreicht wurde.    |
+| low (float)         | Der niedrigste BTC-Preis, der innerhalb dieser Minute erreicht wurde. |
+| close (float)       | Der BTC-Preis am Ende der Minute (Zielvariable).                      |
+| volume (float)      | Das gehandelte BTC-Volumen innerhalb der Minute – Marktaktivität.     |
+| eth_close (float)   | Der minütliche Schlusskurs von Ethereum (ETH).                        |
+
+*Descritive Statistics*
+
+| Statistic    | open          | high          | low           | close          | volume       | eth_close    |
+|--------------|---------------|---------------|---------------|----------------|--------------|--------------|
+| count        | 1.008000e+06  | 1.008000e+06  | 1.008000e+06 | 1.008000e+06   | 1.008000e+06 | 1.008000e+06 |
+| mean         | 8.350555e+04  | 8.353264e+04  |  8.347820e+04  | 8.350560e+04   | 1.999061e+01    | 3.057013e+03 |
+| std          | 2.271697e+04  | 2.272019e+04  | 2.271380e+04  | 2.271694e+04   | 3.475758e+01   | 7.266587e+02  |
+| min          | 3.855892e+04 | 3.857861e+04  | 3.855500e+04   | 3.855892e+04   | 7.015000e-02     | 1.389070e+03 |
+| 25%          | 6.384333e+04  | 6.386535e+04  | 6.381984e+04  | 6.384334e+04   | 4.874850e+00    | 2.512120e+03  |
+| 50% (median) | 8.462811e+04  | 8.465220e+04  | 8.460342e+04  | 8.462820e+04   | 1.034577e+01     | 3.053960e+03  |
+| 75%          | 1.043395e+05  | 1.043680e+05  | 1.043079e+05   | 1.043395e+05   | 2.199453e+01    | 3.560270e+03  |
+| max          | 1.261145e+05 | 1.261996e+05 | 1.260719e+05 | 1.261145e+05  | 2.772456e+03  | 4.954640e+03  |
+
+Die Werte zeigen eine große Bandbreite sowohl bei den Bitcoin-Preisschwankungen als auch beim Handelsvolumen auf Minutenbasis.
+
+- Preise (OHLC): Der durchschnittliche Bitcoin-Preis liegt im betrachteten Zeitraum bei etwa 53.000 USD, jedoch mit einer sehr hohen Standardabweichung von rund 29.000 USD. Dies deutet auf ausgeprägte langfristige Marktbewegungen hin, die sich über verschiedene Marktphasen erstrecken. Der beobachtete Tiefstwert von rund 38.500 USD sowie der Höchstwert von über 126.000 USD verdeutlichen die hohe Volatilität des Bitcoin-Marktes im Analysezeitraum.
+- Volumen: Das gehandelte Volumen auf Minutenbasis weist eine stark asymmetrische Verteilung auf. Während der Median bei vergleichsweise niedrigen Werten liegt, treten vereinzelt sehr hohe Volumenspitzen auf. Diese Unterschiede deuten auf eine klare Trennung zwischen ruhigen Marktphasen und Minuten mit intensiver Handelsaktivität hin, die häufig mit abrupten Preisbewegungen einhergehen.
+- ETH Close: Der durchschnittliche Schlusskurs von Ethereum liegt bei etwa 3.050 USD und weist ebenfalls eine hohe Streuung auf. Dies bestätigt, dass auch der Ethereum-Markt im betrachteten Zeitraum starken Schwankungen unterlag. Die parallele Betrachtung von Bitcoin- und Ethereum-Preisen auf Minutenebene ermöglicht es, kurzfristige gemeinsame Marktbewegungen zu identifizieren und Cross-Asset-Zusammenhänge in die Modellierung einzubeziehen.
+
+Insgesamt zeigen die Minutendaten eine hohe kurzfristige Volatilität, deutliche Unterschiede in der Marktaktivität sowie ausgeprägte Preisschwankungen. Diese Eigenschaften sind für die nachfolgende Modellierung der kurzfristigen Trendrichtung über einen Vorhersagehorizont von 60 Minuten von zentraler Bedeutung und bestätigen die Eignung hochfrequenter Daten für den Einsatz sequenzieller Modelle wie LSTM.
+
+*Script*
+
+[plotter.py](scripts/02_data_understanding/plotter.py)
+
+*Plots*
+
+*1) Entwicklung des BTC-Schlusskurses über den gesamten Zeitraum 2024–2025*
+
+Dieses Diagramm zeigt die Entwicklung des Bitcoin-Schlusskurses auf Minutenbasis über den gesamten Beobachtungszeitraum. Dadurch werden auch kleine und kurzfristige Preisbewegungen sichtbar, die bei einer Zusammenfassung der Daten auf Stundenebene nicht mehr vollständig erkennbar sind.
+
+![02_btc_close_2024-2025.png](images/02_btc_close_2024-2025.png)
+
+Im Vergleich zu stündlichen Daten zeigt sich, dass der Markt auch innerhalb eines übergeordneten Trends starken kurzfristigen Schwankungen unterliegt. Die höhere zeitliche Auflösung liefert somit eine geeignete Grundlage für die Vorhersage der Preisrichtung über einen Horizont von 60 Minuten.
+
+![02_btc_close_minutes_oct_2025.png](images/02_btc_close_minutes_oct_2025.png)
+
+Zusätzlich wurde der Monat Oktober 2025 separat betrachtet, um die im Gesamtzeitraum dargestellten Entwicklungen anhand eines kürzeren, hochaufgelösten Ausschnitts zu konkretisieren. Der Minuten-Plot für Oktober zeigt, dass sich selbst innerhalb eines einzelnen Monats ausgeprägte Auf- und Abwärtsbewegungen sowie plötzliche Kursänderungen beobachten lassen.
+
+Insbesondere kurzfristige Preisbewegungen und schnelle Richtungswechsel werden in dieser Detailansicht sichtbar. Die Oktober-Darstellung ergänzt damit die langfristige Betrachtung und unterstreicht die Relevanz von Minutendaten für die Vorhersage der Preisrichtung über 60 Minuten.
+
+*2) Durchschnittlicher BTC-OHLC-Verlauf und Handelsvolumen pro Stunde (auf Basis des letzten Jahres)*
+
+Wir untersuchen den durchschnittlichen BTC-OHLC-Verlauf für das letzte Jahr in stündlichen Intervallen. Zusätzlich wird das durchschnittliche Handelsvolumen pro Stunde dargestellt.
+
+Das Diagramm besitzt zwei Y-Achsen:
+- linke Achse: Preis (Eröffnung, Höchst-, Tief- und Schlusskurs)
+- rechte Achse: durchschnittliches Handelsvolumen
+
+Die X-Achse zeigt die Stunde des Tages, wobei jeder Punkt den Durchschnittswert dieser Stunde über das gesamte Jahr darstellt.
+
+![02_btc_ohlcv_mean_intraday.png](images/02_btc_ohlcv_mean_intraday.png)
+
+Es ist ersichtlich, dass sich die Eröffnungs- und Schlusskurse über den Tagesverlauf hinweg nahezu identisch entwickeln und nur sehr geringe Unterschiede zwischen den einzelnen Stunden aufweisen. Die Höchst- und Tiefstkurse zeigen hingegen zu bestimmten Tageszeiten deutlich größere Ausschläge, was auf eine erhöhte Volatilität in diesen Phasen hindeutet.
+
+Das Handelsvolumen variiert im Tagesverlauf und steigt in einzelnen Stunden an, verläuft jedoch nicht durchgehend synchron mit den Preisschwankungen. Größere Hoch-Tief-Spannen deuten auf Phasen intensiverer Marktbewegungen hin.
+
+*3) Durchschnittlicher stündlicher High–Low-Range von BTC (auf Basis des letzten Jahres)*
+
+Das Diagramm zeigt die durchschnittliche Preisspanne zwischen Hoch- und Tiefkurs pro Stunde des Tages als Maß für die Volatilität.
+
+![02_btc_high-low_range.png](images/02_btc_high-low_range.png)
+
+Es ist eine deutlich erkennbare Phase erhöhter Volatilität ab etwa 13:00 Uhr zu beobachten. In den darauffolgenden Stunden nimmt der durchschnittliche High–Low-Range stark zu und erreicht gegen 14:00 Uhr sein Tagesmaximum, bevor er in den späteren Nachmittags- und Abendstunden wieder abnimmt.
+
+*4) Veränderung der BTC/ETH-Close-Preise über den letzten Tag*
+
+Die Diagramme zeigen den durchschnittlichen stündlichen Schlusskurs (Close) für BTC und ETH über die letzten 30 Tage, 14 Tage und 7 Tage. Alle Diagramme haben zwei Y-Achsen:
+
+- links: BTC Close
+
+- rechts: ETH Close
+
+Die Punkte geben jeweils den durchschnittlichen Schlusskurs pro Stunde innerhalb des betrachteten Zeitraums an.
+
+![02_btc_eth_close_together.png](images/02_btc_eth_close_together.png)
+
+Letzte 30 Tage (stündlich):
+
+BTC und ETH zeigen einen sehr ähnlichen Tagesverlauf mit weitgehend parallelen Kurven. Die Schwankungen sind relativ glatt, da kurzfristige Ausschläge durch die längere Aggregation gedämpft werden. Auffällig ist ein wiederkehrendes Tagesmuster mit höheren Kursen in den frühen Stunden und einem Rückgang am Nachmittag.
+
+![02_btc_eth_close_14d_30min.png](images/02_btc_eth_close_14d_30min.png)
+
+Letzte 14 Tage (30-minütig):
+
+Die Kurven werden unruhiger und zeigen deutlich mehr kurzfristige Ausschläge. Zwar bewegen sich BTC und ETH weiterhin überwiegend synchron, jedoch treten häufiger kleinere Abweichungen auf. Dies deutet auf kurzfristige Marktimpulse hin, die in der 30-Tage-Sicht noch nivelliert waren.
+
+![02_btc_eth_close_7d_30min.png](images/02_btc_eth_close_7d_30min.png)
+
+Letzte 7 Tage (30-minütig):
+
+Die kurzfristige Dynamik ist am stärksten ausgeprägt. Es sind schnelle Richtungswechsel und steilere Bewegungen sichtbar, insbesondere in den Nachmittags- und Abendstunden. BTC und ETH reagieren weiterhin ähnlich, allerdings mit zeitlich leicht versetzten Bewegungen.
+
+Über alle drei Zeiträume hinweg verlaufen BTC und ETH sehr ähnlich, was auf eine hohe Korrelation hinweist. Mit kürzeren Zeiträumen wird der Verlauf jedoch unruhiger, da kurzfristige Bewegungen stärker sichtbar werden. Die Diagramme zeigen damit, dass feinere Zeitauflösungen zusätzliche Marktdynamiken offenlegen und ETH ein sinnvolles ergänzendes Signal zur Beschreibung der Marktbewegungen darstellt.
+
+*5) Korrelation zwischen BTC und ETH (letzte 30 Tage)*
+
+Das Streudiagramm zeigt eine sehr starke positive Korrelation zwischen den Schlusskursen von BTC und ETH in den letzten 30 Tagen.
+
+![02_btc_eth_correlation.png](images/02_btc_eth_correlation.png)
+
+Der hohe Pearson-Korrelationskoeffizient von r = 0,98 bestätigt, dass sich beide Preise nahezu parallel bewegen und ETH die Marktbewegungen von BTC eng widerspiegelt.
+
+*6) Minütliche BTC-Preisänderungen nach Tageszeit (letztes Jahr)*
+
+Das Diagramm zeigt die Verteilung der minütlichen Bitcoin-Preisänderungen für jede Stunde des Tages auf Basis des letzten Jahres.
+
+- X-Achse: Stunde des Tages (0–23)
+- Y-Achse: Stärke der Preisbewegung pro Minute
+
+![02_intraday_minute_change.png](images/02_intraday_minute_change.png)
+
+Die minütlichen Preisänderungen von Bitcoin liegen im Durchschnitt nahe bei null, unterscheiden sich jedoch deutlich in ihrer Streuung über den Tagesverlauf. Besonders zwischen 13:00 und 17:00 Uhr ist die Streuung am höchsten, was auf eine erhöhte kurzfristige Marktaktivität in diesem Zeitraum hinweist.
+
 ---
 
 ## Step 3 - Data Preparation (Pre-Split)
