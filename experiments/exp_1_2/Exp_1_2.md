@@ -564,3 +564,33 @@ Nutzung des LSTM-Modells:
 - Der vorhergesagte Trend bezieht sich darauf, wie sich der Bitcoin Close Preis in den nächsten 30 Minuten entwickeln wird
 
 Das Setzen eines Orders folgt der gleichen Logik wie der Backtesting Algorithmus.
+
+### Performance Paper trading
+
+*1) Equity Kurve im Vergleich zum Bitcoin Close Preis*
+
+![Equity vs Close Preis](images/09_paper_trading_close_vs_equity.png)
+
+- Die Portfolio-Equity (rot) folgt in weiten Teilen der Bewegung des BTC-Preises (blau), was darauf hindeutet, dass die Trading-Strategie stark vom allgemeinen Markttrend abhängt.
+- Bitcoin-Close Preis deutlich volatiler als Equity-Kurve
+- Bei mehreren BTC-Preis-Erholungen (z.B. am 9., 10. und 12. Januar) zeigt die Equity keine entsprechenden Aufwärtsbewegungen, was darauf hinweist, dass die Trading-Strategie diese Bewegungen nicht erfolgreich erkennen konnte
+
+Betrachteter Zeitraum: 05.01.2026 bis zum 13.01.2026
+
+| Merkmal      | Equity              | BTC-Close         |
+|--------------|---------------------|-------------------|
+| Startkapital | $100,000.00         | $91,444.23        | 
+| Endkapital   | $96,094.36          | $91,251.52        |
+| Veränderung  | $-3,905.64 (-3.91%) | $-192.70 (-0.21%) |
+
+Im betrachteten Zeitraum ist der Portfolio-Wert um 3,91 % gesunken, während der Bitcoin-Preis nur um 0,21 % fiel.
+Dies zeigt, dass die Handelsstrategie deutlich schlechter als ein einfaches Halten von Bitcoin abgeschnitten hat und weiteres Optimierungspotenzial besteht.
+
+SELL Orders: 37
+BUY Orders: 171
+TOTAL: 208
+
+Es ist erwartungsgemäß, dass weniger Sell-Signale als Buy-Signale auftreten, da ein Sell-Signal nur ausgeführt werden kann, wenn zuvor eine Position aufgebaut wurde und daher nicht mehrfach hintereinander ausgelöst werden kann.
+Im zweiten Experiment ist im Vergleich zum ersten eine deutliche Verbesserung erkennbar, da nun regelmäßig Sell-Orders gesetzt werden, während im ersten Experiment nahezu keine Sell-Orders ausgeführt wurden.
+
+### Paper trading vs Backtesting
