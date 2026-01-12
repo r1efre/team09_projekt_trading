@@ -22,7 +22,7 @@
 
 In diesem zweiten Experiment wird die Richtung der kurzfristigen Bitcoin-Preisentwicklung vorhergesagt. Ziel ist es, zu bestimmen, ob der Bitcoin-Preis innerhalb der nächsten 60 Minuten steigt, fällt oder neutral bleibt.
 Im Gegensatz zum ersten Experiment, das auf stündlichen Daten basierte, werden in diesem Experiment minütliche Preisdaten im Zeitraum vom 01.01.2024 bis zum 30.11.2025 als Trainings- und Validierungsdaten verwendet. Durch die höhere zeitliche Auflösung soll eine feinere Erfassung kurzfristiger Marktbewegungen ermöglicht werden.
-Die Trendrichtung wird anhand des prozentualen Preisreturns zwischen dem aktuellen Zeitpunkt t und dem Schlusskurs nach 60 Minuten (t + 60) bestimmt. Ein positiver Return wird als steigender Trend, ein negativer Return als fallender Trend interpretiert.
+Die Trendrichtung wird anhand des prozentualen Preisreturns zwischen dem aktuellen Zeitpunkt t und dem Schlusskurs nach 30 Minuten (t + 30) bestimmt. Ein positiver Return wird als steigender Trend, ein negativer Return als fallender Trend interpretiert.
 
 Dieses Experiment basiert auf:
 [Erstes Experiment](../exp_1_1/Exp_1_1.md)
@@ -34,7 +34,7 @@ Da nun minütliche und nicht stündliche Daten verwendet werden, werden die Zeit
 
 - Preis- und Volumenmerkmale: open, high, low, close und volume jeweils auf Minutenbasis.
 - Momentum-Merkmale: return_5min, return_30min, return_60min --> prozentuale Preisveränderung über 5, 30 bzw. 60 Minuten
-- Trendindikatoren: EMA_15 und EMA_60 --> normalisierte exponentielle gleitende Durchschnitte
+- Trendindikatoren: EMA_20 und EMA_90 --> normalisierte exponentielle gleitende Durchschnitte
 - RSI (Trendstärke-Indikator aus Preisänderungen) --> berechnet über die letzten 14 Perioden
 - ATR (Maß für die Volatilität des Marktes) --> berechent über die letzten 14 Perioden
 - Cross-Asset-Features anhand von Ethereum: ETH_Close, ETH_return_5min, ETH_return_30min, ETH_return_60min, ETH/BTC Ratio (relative Stärke zwischen ETH und BTC)
