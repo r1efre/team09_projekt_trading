@@ -474,7 +474,7 @@ Entry Preis: Schlusskurs der aktuellen Stunde
 
 Entry Size: 
 
-Die Größe des Kaufanteils richtet sich nach dem Vorkommen des UP-Signals in den letzten 15 Minuten.
+Die Größe des Kaufanteils richtet sich nach der durchschnittlichen Wahrscheinlichkeit des UP-Signals in den letzten 15 Minuten.
 - Wahrscheinlichkeit >= 0.5 -> Kauf für 20% der Buying power
 - Wahrscheinlichkeit >= 0.4 -> Kauf für 15% der Buying power
 - Wahrscheinlichkeit >= 0.3 -> Kauf für 10% der Buying power
