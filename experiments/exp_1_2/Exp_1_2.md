@@ -12,7 +12,7 @@
 - [Step 7 - Model Training](#step-7---model-training)
 - [Step 8 - Model Testing](#step-8---model-testing)
 - [Step 9 - Model Deployment](#step-9---deployment)
-- [Fazit und Next Steps](#fazit-und-next-steps)
+- [Fazit](#fazit)
 
 --- 
 
@@ -593,4 +593,36 @@ TOTAL: 208
 Es ist erwartungsgemäß, dass weniger Sell-Signale als Buy-Signale auftreten, da ein Sell-Signal nur ausgeführt werden kann, wenn zuvor eine Position aufgebaut wurde und daher nicht mehrfach hintereinander ausgelöst werden kann.
 Im zweiten Experiment ist im Vergleich zum ersten eine deutliche Verbesserung erkennbar, da nun regelmäßig Sell-Orders gesetzt werden, während im ersten Experiment nahezu keine Sell-Orders ausgeführt wurden.
 
-### Paper trading vs Backtesting
+### Vergleich Paper Trading 
+
+#### Erstes Experiment 
+
+- Der Handel wurde am 15. Dezember um 10 Uhr gestartet.
+- Der Handel wurde am 17. Dezember um 14:49 Uhr eingestellt.
+- Auf dem Konto verblieben 195,16 $
+- Danach wurden keine neuen Transaktionen mehr eröffnet
+- Alle aufgezeichneten Signale waren BUY
+- Es gab keine NEUTRAL-Signale, der Bot führte bis zum Stopp stündlich Aktionen durch
+
+Im ersten Experiment lag ein grundlegender Fehler in der Handelsstrategie vor: Jedes Buy-Signal wurde ausgeführt, auch wenn mehrere Buy-Signale unmittelbar hintereinander auftraten. 
+Dadurch wurde das verfügbare Kapital sehr schnell vollständig investiert, sodass der Bot anschließend keine weiteren Trades mehr ausführen konnte. 
+Da zudem keine Sell-Signale ausgelöst wurden, konnte das in Bitcoin gebundene Kapital nicht wieder freigesetzt werden.
+
+Aus diesem Grund konnte die Entwicklung des Portfolios nur über einen Zeitraum von etwa zehn Stunden analysiert werden. 
+In diesem Zeitraum zeigte sich, dass sich die Equity-Kurve nahezu identisch zum Bitcoin-Close-Preis entwickelte. 
+Die Handelsstrategie erzielte somit keinen Mehrwert gegenüber einer einfachen Buy-and-Hold-Strategie.
+
+#### Zweites Experiment 
+
+- Der Handel dauerte 8 Tage 
+- Auf dem Konto verblieben am Ende des Betrachtungszeitraums 70 291,6 $
+- Es gab Buy und Sell Signale als auch Hold-Phasen, wo keine Signale gesendet wurden
+
+Das zweite Experiment zeigt, dass das Modell nun alle drei Klassen (UP, DOWN, Neutral) vorhersagt. 
+In Kombination mit der angepassten Handelsstrategie führt dies dazu, dass der Bot über mehrere Tage hinweg stabil arbeiten kann, ohne sein gesamtes Kapital frühzeitig aufzubrauchen.
+
+Dennoch ist zu beobachten, dass sich die Equity-Kurve in der ersten Hälfte des Betrachtungszeitraums ähnlich wie der Bitcoin-Close-Preis entwickelt. 
+In der zweiten Hälfte fällt die Equity-Kurve jedoch, während sich der Bitcoin-Preis erholt und sogar ansteigt. 
+Der Handelsbot schneidet in diesem Szenario somit schlechter ab als eine einfache Buy-and-Hold-Strategie.
+
+### Fazit 
